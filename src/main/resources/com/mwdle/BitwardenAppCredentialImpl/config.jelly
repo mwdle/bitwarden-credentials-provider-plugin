@@ -1,0 +1,20 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+
+    <st:include page="id-and-description" class="${descriptor.clazz}"/>
+
+    <f:entry title="Lookup Method" field="lookupMethod">
+        <f:select />
+    </f:entry>
+
+    <f:entry title="Bitwarden Item Name" field="bitwardenItemName"
+             help="Fill this in if you selected 'By Name' above.">
+        <f:textbox value="${instance.bitwardenItemName}" />
+    </f:entry>
+
+    <f:entry title="Bitwarden Item ID" field="bitwardenItemId"
+             help="Fill this in if you selected 'By ID' above.">
+        <f:textbox value="${instance.bitwardenItemId}" />
+    </f:entry>
+
+</j:jelly>

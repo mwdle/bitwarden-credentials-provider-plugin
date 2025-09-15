@@ -4,6 +4,8 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.util.Secret;
@@ -13,72 +15,98 @@ import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 import org.springframework.security.core.Authentication;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable; // <-- Required import
+import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Extension
 public class BitwardenCredentialsProvider extends CredentialsProvider {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Override
     @Nonnull
     public <C extends Credentials> List<C> getCredentialsInItemGroup(
             @Nonnull Class<C> type,
-            @Nullable ItemGroup itemGroup, // <-- Correctly marked as Nullable
-            @Nullable Authentication authentication, // <-- Correctly marked as Nullable
+            @Nullable ItemGroup itemGroup,
+            @Nullable Authentication authentication,
             @Nonnull List<DomainRequirement> domainRequirements) {
 
-        // If we don't have a context to search in, we can't do anything.
+        System.out.println("\n--- PROVIDER DEBUG: getCredentialsInItemGroup called for type: " + type.getSimpleName() + " ---");
+
         if (itemGroup == null || authentication == null) {
+            System.out.println("PROVIDER DEBUG: Exiting because itemGroup or authentication is null.");
             return Collections.emptyList();
         }
 
-        // --- Step 1: Get the global configuration ---
         BitwardenGlobalConfig config = BitwardenGlobalConfig.get();
         String apiKeyCredId = config.getApiKeyCredentialId();
         String masterPassCredId = config.getMasterPasswordCredentialId();
-
         if (apiKeyCredId == null || masterPassCredId == null) {
+            System.out.println("PROVIDER DEBUG: Exiting because plugin is not configured in Manage Jenkins.");
             return Collections.emptyList();
         }
+        System.out.println("PROVIDER DEBUG: Found config. API Key ID: " + apiKeyCredId);
 
-        // --- Step 2: Look up auth credentials using an inlined, recursion-safe stream ---
         StandardUsernamePasswordCredentials apiKey = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
-                .filter(provider -> provider != this)
-                .flatMap(provider -> provider.getCredentialsInItemGroup(StandardUsernamePasswordCredentials.class, itemGroup, authentication, domainRequirements).stream())
-                .filter(c -> c.getId().equals(apiKeyCredId))
-                .findFirst().orElse(null);
-
+                .filter(p -> p != this).flatMap(p -> p.getCredentialsInItemGroup(StandardUsernamePasswordCredentials.class, itemGroup, authentication, domainRequirements).stream())
+                .filter(c -> c.getId().equals(apiKeyCredId)).findFirst().orElse(null);
         StringCredentials masterPassword = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
-                .filter(provider -> provider != this)
-                .flatMap(provider -> provider.getCredentialsInItemGroup(StringCredentials.class, itemGroup, authentication, domainRequirements).stream())
-                .filter(c -> c.getId().equals(masterPassCredId))
-                .findFirst().orElse(null);
-
+                .filter(p -> p != this).flatMap(p -> p.getCredentialsInItemGroup(StringCredentials.class, itemGroup, authentication, domainRequirements).stream())
+                .filter(c -> c.getId().equals(masterPassCredId)).findFirst().orElse(null);
         if (apiKey == null || masterPassword == null) {
+            System.out.println("PROVIDER DEBUG: Exiting because API Key or Master Password credentials were not found.");
+            return Collections.emptyList();
+        }
+        System.out.println("PROVIDER DEBUG: Successfully looked up auth credentials.");
+
+        List<BitwardenAppCredential> pointers = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
+                .filter(p -> p != this).flatMap(p -> p.getCredentialsInItemGroup(BitwardenAppCredential.class, itemGroup, authentication, domainRequirements).stream())
+                .toList();
+        System.out.println("PROVIDER DEBUG: Found " + pointers.size() + " pointer credential(s).");
+
+        if (pointers.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // --- Look up pointer credentials using the same inlined, recursion-safe stream ---
-        List<BitwardenAppCredential> pointers = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
-                .filter(provider -> provider != this)
-                .flatMap(provider -> provider.getCredentialsInItemGroup(BitwardenAppCredential.class, itemGroup, authentication, domainRequirements).stream())
-                .collect(Collectors.toList());
+        BitwardenClient client = new BitwardenClient(apiKey, masterPassword, config.getServerUrl());
+        try {
+            System.out.println("PROVIDER DEBUG: Getting session token...");
+            String sessionToken = client.getSessionToken();
+            System.out.println("PROVIDER DEBUG: Got session token successfully.");
 
-
-        // --- Dummy data logic for testing ---
-        if (type.isAssignableFrom(StringCredentials.class)) {
             return pointers.stream()
-                    .map(ptr -> (C) new StringCredentialsImpl(
-                            ptr.getScope(),
-                            ptr.getId(),
-                            "Dummy secret for item: '" + ptr.getItemName() + "'",
-                            Secret.fromString("it-works-" + ptr.getItemName())
-                    ))
+                    .map(ptr -> {
+                        System.out.println("PROVIDER DEBUG: Processing pointer with ID: " + ptr.getId() + " | LookupValue: " + ptr.getLookupValue());
+                        try {
+                            String itemJson = client.getSecret(ptr.getLookupValue(), sessionToken);
+                            System.out.println("PROVIDER DEBUG: RAW JSON from Bitwarden for '" + ptr.getLookupValue() + "': " + itemJson);
+                            Map<String, Object> item = OBJECT_MAPPER.readValue(itemJson, Map.class);
+                            if (type.isAssignableFrom(StringCredentials.class)) {
+                                if (item.get("login") instanceof Map) { Map<String, Object> loginData = (Map<String, Object>) item.get("login"); if (loginData.get("password") != null) { return (C) new StringCredentialsImpl(ptr.getScope(), ptr.getId(), ptr.getDescription(), Secret.fromString((String) loginData.get("password"))); } }
+                                if (item.get("notes") instanceof String) { return (C) new StringCredentialsImpl(ptr.getScope(), ptr.getId(), ptr.getDescription(), Secret.fromString((String) item.get("notes"))); }
+                            } else if (type.isAssignableFrom(StandardUsernamePasswordCredentials.class)) {
+                                if (item.get("login") instanceof Map) { Map<String, Object> loginData = (Map<String, Object>) item.get("login"); if (loginData.get("username") != null && loginData.get("password") != null) { return (C) new UsernamePasswordCredentialsImpl(ptr.getScope(), ptr.getId(), ptr.getDescription(), (String) loginData.get("username"), (String) loginData.get("password")); } }
+                            }
+                            System.out.println("PROVIDER DEBUG: Could not map item '" + ptr.getLookupValue() + "' to the requested type.");
+                            return null;
+                        } catch (Exception e) {
+                            System.err.println("PROVIDER DEBUG: ERROR inside map for item '" + ptr.getLookupValue() + "': " + e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-        }
 
-        return Collections.emptyList();
+        } catch (IOException | InterruptedException e) {
+            System.err.println("PROVIDER DEBUG: ERROR communicating with Bitwarden CLI: " + e.getMessage());
+            return Collections.emptyList();
+        } finally {
+            client.logout();
+        }
     }
 }
