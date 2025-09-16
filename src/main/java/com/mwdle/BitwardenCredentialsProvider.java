@@ -45,8 +45,8 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
 
         BitwardenGlobalConfig config = BitwardenGlobalConfig.get();
         String apiCredentialId = config.getApiCredentialId();
-        String masterPassCredId = config.getMasterPasswordCredentialId();
-        if (apiCredentialId == null || masterPassCredId == null) {
+        String masterPassCredentialId = config.getMasterPasswordCredentialId();
+        if (apiCredentialId == null || masterPassCredentialId == null) {
             System.out.println("PROVIDER DEBUG: Exiting because plugin is not configured in Manage Jenkins.");
             return Collections.emptyList();
         }
@@ -57,7 +57,7 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
                 .filter(c -> c.getId().equals(apiCredentialId)).findFirst().orElse(null);
         StringCredentials masterPassword = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
                 .filter(p -> p != this).flatMap(p -> p.getCredentialsInItemGroup(StringCredentials.class, itemGroup, authentication, domainRequirements).stream())
-                .filter(c -> c.getId().equals(masterPassCredId)).findFirst().orElse(null);
+                .filter(c -> c.getId().equals(masterPassCredentialId)).findFirst().orElse(null);
         if (apiCredentials == null || masterPassword == null) {
             System.out.println("PROVIDER DEBUG: Exiting because API Key or Master Password credentials were not found.");
             return Collections.emptyList();
