@@ -44,21 +44,21 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
         }
 
         BitwardenGlobalConfig config = BitwardenGlobalConfig.get();
-        String apiKeyCredId = config.getApiKeyCredentialId();
+        String apiCredentialId = config.getApiCredentialId();
         String masterPassCredId = config.getMasterPasswordCredentialId();
-        if (apiKeyCredId == null || masterPassCredId == null) {
+        if (apiCredentialId == null || masterPassCredId == null) {
             System.out.println("PROVIDER DEBUG: Exiting because plugin is not configured in Manage Jenkins.");
             return Collections.emptyList();
         }
-        System.out.println("PROVIDER DEBUG: Found config. API Key ID: " + apiKeyCredId);
+        System.out.println("PROVIDER DEBUG: Found config. API Key ID: " + apiCredentialId);
 
-        StandardUsernamePasswordCredentials apiKey = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
+        StandardUsernamePasswordCredentials apiCredentials = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
                 .filter(p -> p != this).flatMap(p -> p.getCredentialsInItemGroup(StandardUsernamePasswordCredentials.class, itemGroup, authentication, domainRequirements).stream())
-                .filter(c -> c.getId().equals(apiKeyCredId)).findFirst().orElse(null);
+                .filter(c -> c.getId().equals(apiCredentialId)).findFirst().orElse(null);
         StringCredentials masterPassword = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
                 .filter(p -> p != this).flatMap(p -> p.getCredentialsInItemGroup(StringCredentials.class, itemGroup, authentication, domainRequirements).stream())
                 .filter(c -> c.getId().equals(masterPassCredId)).findFirst().orElse(null);
-        if (apiKey == null || masterPassword == null) {
+        if (apiCredentials == null || masterPassword == null) {
             System.out.println("PROVIDER DEBUG: Exiting because API Key or Master Password credentials were not found.");
             return Collections.emptyList();
         }
@@ -73,7 +73,7 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             return Collections.emptyList();
         }
 
-        BitwardenClient client = new BitwardenClient(apiKey, masterPassword, config.getServerUrl());
+        BitwardenClient client = new BitwardenClient(apiCredentials, masterPassword, config.getServerUrl());
         try {
             System.out.println("PROVIDER DEBUG: Getting session token...");
             String sessionToken = client.getSessionToken();

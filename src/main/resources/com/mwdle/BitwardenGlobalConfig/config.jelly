@@ -5,7 +5,7 @@
                  help="For self-hosted instances like Vaultwarden. Leave blank for official default Bitwarden server.">
             <f:textbox />
         </f:entry>
-        <f:entry title="Bitwarden API Key Credential" field="apiKeyCredentialId">
+        <f:entry title="Bitwarden API Key Credential" field="apiCredentialId">
             <c:select />
         </f:entry>
         <f:entry title="Bitwarden Master Password Credential" field="masterPasswordCredentialId">

@@ -10,17 +10,18 @@ import java.util.Map;
 
 public class BitwardenClient {
 
-    private final StandardUsernamePasswordCredentials apiKey;
+    private final StandardUsernamePasswordCredentials apiCredentials;
     private final StringCredentials masterPassword;
     private final String serverUrl;
 
-    public BitwardenClient(StandardUsernamePasswordCredentials apiKey, StringCredentials masterPassword, String serverUrl) {
-        this.apiKey = apiKey;
+    public BitwardenClient(StandardUsernamePasswordCredentials apiCredentials, StringCredentials masterPassword, String serverUrl) {
+        this.apiCredentials = apiCredentials;
         this.masterPassword = masterPassword;
         this.serverUrl = serverUrl;
     }
 
     public String getSessionToken() throws IOException, InterruptedException {
+        logout();
         // Set server config if a URL is provided
         if (this.serverUrl != null && !this.serverUrl.isEmpty()) {
             executeCommand(new ProcessBuilder("bw", "config", "server", this.serverUrl));
@@ -33,8 +34,8 @@ public class BitwardenClient {
         // We use ProcessBuilder to securely pass credentials via environment variables
         ProcessBuilder pb = new ProcessBuilder("bw", "login", "--apikey");
         Map<String, String> env = pb.environment();
-        env.put("BW_CLIENTID", this.apiKey.getUsername());
-        env.put("BW_CLIENTSECRET", this.apiKey.getPassword().getPlainText());
+        env.put("BW_CLIENTID", this.apiCredentials.getUsername());
+        env.put("BW_CLIENTSECRET", this.apiCredentials.getPassword().getPlainText());
 
         // The login command doesn't produce useful stdout, but we check for errors
         String result = executeCommand(pb);
