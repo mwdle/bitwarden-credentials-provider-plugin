@@ -1,16 +1,17 @@
 package com.mwdle;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import hudson.Extension;
-import hudson.model.Item;
 import hudson.util.ListBoxModel;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
 import java.util.Collections;
@@ -19,7 +20,7 @@ import java.util.Collections;
 public class BitwardenGlobalConfig extends GlobalConfiguration {
 
     private String serverUrl;
-    private String apiKeyCredentialId;
+    private String apiCredentialId;
     private String masterPasswordCredentialId;
 
     public BitwardenGlobalConfig() {
@@ -30,21 +31,18 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
         return GlobalConfiguration.all().get(BitwardenGlobalConfig.class);
     }
 
-    // --- GETTERS ---
     public String getServerUrl() { return serverUrl; }
-    // These two methods were missing
-    public String getApiKeyCredentialId() { return apiKeyCredentialId; }
+    public String getApiCredentialId() { return apiCredentialId; }
     public String getMasterPasswordCredentialId() { return masterPasswordCredentialId; }
 
-    // --- SETTERS ---
     @DataBoundSetter
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
         save();
     }
     @DataBoundSetter
-    public void setApiKeyCredentialId(String apiKeyCredentialId) {
-        this.apiKeyCredentialId = apiKeyCredentialId;
+    public void setApiCredentialId(String apiCredentialId) {
+        this.apiCredentialId = apiCredentialId;
         save();
     }
     @DataBoundSetter
@@ -53,34 +51,35 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
         save();
     }
 
-    // --- UI HELPERS ---
     @POST
-    public ListBoxModel doFillApiKeyCredentialIdItems(@AncestorInPath Item item) {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+    public ListBoxModel doFillApiCredentialIdItems(@AncestorInPath Jenkins context, @QueryParameter String apiCredentialId) {
+        context.checkPermission(Jenkins.ADMINISTER);
+
         return new StandardListBoxModel()
-                // Use the modern includeMatching method that implicitly uses the current context
-                .includeMatching(
-                        item,
-                        UsernamePasswordCredentialsImpl.class,
-                        // Provide an explicit empty list of DomainRequirements
+                .includeEmptyValue()
+                .includeMatchingAs(
+                        Jenkins.getAuthentication2(),
+                        context,
+                        StandardUsernamePasswordCredentials.class,
                         Collections.emptyList(),
-                        // Match all credentials of this type
-                        CredentialsMatchers.always()
-                );
+                        CredentialsMatchers.anyOf(CredentialsMatchers.withScope(CredentialsScope.GLOBAL))
+                )
+                .includeCurrentValue(apiCredentialId);
     }
 
     @POST
-    public ListBoxModel doFillMasterPasswordCredentialIdItems(@AncestorInPath Item item) {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+    public ListBoxModel doFillMasterPasswordCredentialIdItems(@AncestorInPath Jenkins context, @QueryParameter String masterPasswordCredentialId) {
+        context.checkPermission(Jenkins.ADMINISTER);
+
         return new StandardListBoxModel()
-                // Use the modern includeMatching method that implicitly uses the current context
-                .includeMatching(
-                        item,
-                        StringCredentialsImpl.class,
-                        // Provide an explicit empty list of DomainRequirements
+                .includeEmptyValue()
+                .includeMatchingAs(
+                        Jenkins.getAuthentication2(),
+                        context,
+                        StringCredentials.class,
                         Collections.emptyList(),
-                        // Match all credentials of this type
-                        CredentialsMatchers.always()
-                );
+                        CredentialsMatchers.anyOf(CredentialsMatchers.withScope(CredentialsScope.GLOBAL))
+                )
+                .includeCurrentValue(masterPasswordCredentialId);
     }
 }
