@@ -2,26 +2,33 @@ package com.mwdle;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Map;
 
-public class BitwardenClient {
+public class BitwardenClient implements AutoCloseable {
 
     private final StandardUsernamePasswordCredentials apiCredentials;
     private final StringCredentials masterPassword;
     private final String serverUrl;
+    private final Path tempAppDataDir;
 
-    public BitwardenClient(StandardUsernamePasswordCredentials apiCredentials, StringCredentials masterPassword, String serverUrl) {
+    public BitwardenClient(StandardUsernamePasswordCredentials apiCredentials, StringCredentials masterPassword, String serverUrl) throws IOException {
         this.apiCredentials = apiCredentials;
         this.masterPassword = masterPassword;
         this.serverUrl = serverUrl;
+        // Create a unique temporary directory for this client instance.
+        // This isolates the session from all other concurrent operations.
+        this.tempAppDataDir = Files.createTempDirectory("bitwarden-cli-");
     }
 
     public String getSessionToken() throws IOException, InterruptedException {
-        logout();
         // Set server config if a URL is provided
         if (this.serverUrl != null && !this.serverUrl.isEmpty()) {
             executeCommand(new ProcessBuilder("bw", "config", "server", this.serverUrl));
@@ -58,6 +65,9 @@ public class BitwardenClient {
      * @throws IOException If the command returns a non-zero exit code.
      */
     private String executeCommand(ProcessBuilder pb) throws IOException, InterruptedException {
+        Map<String, String> env = pb.environment();
+        env.put("BITWARDENCLI_APPDATA_DIR", this.tempAppDataDir.toAbsolutePath().toString());
+
         pb.redirectErrorStream(true); // Combine stdout and stderr
         Process process = pb.start();
 
@@ -89,17 +99,30 @@ public class BitwardenClient {
     }
 
     /**
-     * Logs out of the Bitwarden CLI.
+     * Cleans up the session and all temporary resources used by the client.
+     * This method first attempts to log out of the Bitwarden CLI to invalidate the
+     * server-side session, then recursively deletes the temporary data directory
+     * created for this client instance. This is called automatically when the
+     * client is used in a try-with-resources block.
+     *
+     * @throws IOException if there is an error walking the file tree during cleanup.
      */
-    public void logout() {
+    @Override
+    public void close() throws IOException {
         try {
-            ProcessBuilder pb = new ProcessBuilder("bw", "logout");
-            executeCommand(pb);
+            executeCommand(new ProcessBuilder("bw", "logout"));
             System.out.println("Logout command executed.");
         } catch (Exception e) {
-            // Don't throw an exception on logout failure, just log it.
-            System.err.println("Failed to logout, but continuing anyway. " + e.getMessage());
+            System.err.println("Failed to logout. Error: " + e.getMessage());
+        }
+        try (java.util.stream.Stream<Path> walk = Files.walk(tempAppDataDir)) {
+            walk.sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(file -> {
+                        if (!file.delete()) {
+                            System.err.println("Failed to delete file during cleanup: " + file.getAbsolutePath());
+                        }
+                    });
         }
     }
-
 }
