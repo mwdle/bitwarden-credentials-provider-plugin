@@ -13,12 +13,15 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
 
 @Extension
 public class BitwardenGlobalConfig extends GlobalConfiguration {
 
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     private String serverUrl;
     private String apiCredentialId;
     private String masterPasswordCredentialId;
@@ -58,11 +61,14 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
-                        Jenkins.getAuthentication2(),
+                        authentication,
                         context,
                         StandardUsernamePasswordCredentials.class,
                         Collections.emptyList(),
-                        CredentialsMatchers.anyOf(CredentialsMatchers.withScope(CredentialsScope.GLOBAL))
+                        CredentialsMatchers.anyOf(
+                                CredentialsMatchers.withScope(CredentialsScope.SYSTEM),
+                                CredentialsMatchers.withScope(CredentialsScope.GLOBAL)
+                        )
                 )
                 .includeCurrentValue(apiCredentialId);
     }
@@ -74,11 +80,14 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
-                        Jenkins.getAuthentication2(),
+                        authentication,
                         context,
                         StringCredentials.class,
                         Collections.emptyList(),
-                        CredentialsMatchers.anyOf(CredentialsMatchers.withScope(CredentialsScope.GLOBAL))
+                        CredentialsMatchers.anyOf(
+                                CredentialsMatchers.withScope(CredentialsScope.SYSTEM),
+                                CredentialsMatchers.withScope(CredentialsScope.GLOBAL)
+                        )
                 )
                 .includeCurrentValue(masterPasswordCredentialId);
     }
