@@ -38,7 +38,6 @@ public class BitwardenAppCredentialImpl extends BaseStandardCredentials implemen
 
     public String getLookupMethod() { return this.lookupMethod; }
 
-    // This method is part of the interface but our provider handles the secret fetching directly.
     @Override
     public Secret getSecret() { return null; }
 
@@ -48,7 +47,6 @@ public class BitwardenAppCredentialImpl extends BaseStandardCredentials implemen
         @Override
         public String getDisplayName() { return "Bitwarden-Backed Credential"; }
 
-        // This UI helper method is now correctly located in the Descriptor
         public ListBoxModel doFillLookupMethodItems() {
             ListBoxModel items = new ListBoxModel();
             items.add("By Name", "name");

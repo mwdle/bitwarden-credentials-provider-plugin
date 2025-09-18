@@ -10,9 +10,7 @@ public interface BitwardenAppCredential extends StandardCredentials {
 
     String getBitwardenItemName();
 
-    // Helper to get whichever lookup value is configured
     String getLookupValue();
 
-    // The main secret getter, as required by the guide for lazy-loading providers
     Secret getSecret() throws IOException, InterruptedException;
 }
