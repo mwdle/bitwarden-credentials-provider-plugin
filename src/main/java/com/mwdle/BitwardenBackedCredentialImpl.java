@@ -30,23 +30,34 @@ public class BitwardenBackedCredentialImpl extends BaseStandardCredentials imple
      * @param scope The scope of the credential (e.g., GLOBAL).
      * @param id The unique ID for this credential within Jenkins.
      * @param description A user-provided description for this credential.
-     * @param lookupMethod The selected lookup method ("name" or "id").
-     * @param bitwardenItemId The ID of the Bitwarden item to look up.
-     * @param bitwardenItemName The name of the Bitwarden item to look up.
+     * @param lookupMethod The selected lookup method information, including lookup type, and lookup criteria, such as item name or item id.
      */
     @DataBoundConstructor
-    public BitwardenBackedCredentialImpl(@Nullable CredentialsScope scope, @Nullable String id, @Nullable String description,
-                                         @Nullable String lookupMethod, @Nullable String bitwardenItemId, @Nullable String bitwardenItemName) {
+    public BitwardenBackedCredentialImpl(@Nullable CredentialsScope scope, @Nullable String id, @Nullable String description, LookupMethodData lookupMethod) {
         super(scope, id, description);
-        this.lookupMethod = lookupMethod;
-        // Only store the relevant value based on the selected lookup method.
-        this.bitwardenItemId = "id".equals(lookupMethod) ? bitwardenItemId : null;
-        this.bitwardenItemName = "name".equals(lookupMethod) ? bitwardenItemName : null;
+        this.lookupMethod = lookupMethod.value;
+        this.bitwardenItemId = this.lookupMethod.equals("id") ? lookupMethod.bitwardenItemId : null;
+        this.bitwardenItemName = this.lookupMethod.equals("name") ? lookupMethod.bitwardenItemName : null;
     }
 
     /**
-     * {@inheritDoc}
+     * A static helper class that exactly matches the nested JSON structure
+     * sent by the <f:radioBlock name="lookupMethod"> tag in the Jelly UI.
+     * This allows Jenkins's data-binding framework to correctly deserialize the form data.
      */
+    public static final class LookupMethodData {
+        private final String value;
+        private final String bitwardenItemId;
+        private final String bitwardenItemName;
+
+        @DataBoundConstructor
+        public LookupMethodData(String value, String bitwardenItemId, String bitwardenItemName) {
+            this.value = value;
+            this.bitwardenItemId = bitwardenItemId;
+            this.bitwardenItemName = bitwardenItemName;
+        }
+    }
+
     @Override
     public String getBitwardenItemId() { return this.bitwardenItemId; }
 
