@@ -34,6 +34,7 @@ public class BitwardenClient implements AutoCloseable {
         }
         login();
         sessionToken = unlock();
+        sync();
     }
 
     private void login() throws IOException, InterruptedException {
@@ -84,6 +85,12 @@ public class BitwardenClient implements AutoCloseable {
         }
 
         return output.toString().trim();
+    }
+
+    public void sync() throws IOException, InterruptedException {
+        System.out.println("Syncing Bitwarden vault...");
+        executeCommand(new ProcessBuilder("bw", "sync", "--session", sessionToken));
+        System.out.println("Sync complete.");
     }
 
     /**
