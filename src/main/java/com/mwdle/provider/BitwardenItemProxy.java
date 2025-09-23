@@ -3,7 +3,7 @@ package com.mwdle.provider;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.mwdle.BitwardenAppCredential;
+import com.mwdle.BitwardenBackedCredential;
 import com.mwdle.BitwardenClient;
 import com.mwdle.BitwardenGlobalConfig;
 import com.mwdle.converters.BitwardenItemConverter;
@@ -23,12 +23,12 @@ import java.util.Collections;
 public class BitwardenItemProxy implements InvocationHandler, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final BitwardenAppCredential pointer;
+    private final BitwardenBackedCredential pointer;
     private final ItemGroup<?> context;
     private final Authentication authentication;
     private transient volatile StandardCredentials resolved;
 
-    public BitwardenItemProxy(BitwardenAppCredential pointer, ItemGroup<?> context, Authentication authentication) {
+    public BitwardenItemProxy(BitwardenBackedCredential pointer, ItemGroup<?> context, Authentication authentication) {
         this.pointer = pointer;
         this.context = context;
         this.authentication = authentication;

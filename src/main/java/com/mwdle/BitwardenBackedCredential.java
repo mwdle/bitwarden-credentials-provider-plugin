@@ -11,7 +11,7 @@ import java.io.IOException;
  * {@link com.mwdle.provider.BitwardenCredentialsProvider}. It extends {@link StandardCredentials}, making it a
  * recognizable type within the Jenkins ecosystem.
  */
-public interface BitwardenAppCredential extends StandardCredentials {
+public interface BitwardenBackedCredential extends StandardCredentials {
 
     /**
      * @return The unique UUID of the Bitwarden item, if configured for lookup by ID.

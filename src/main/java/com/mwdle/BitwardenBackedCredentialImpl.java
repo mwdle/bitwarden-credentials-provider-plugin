@@ -3,7 +3,6 @@ package com.mwdle;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import hudson.Extension;
-import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -11,12 +10,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * The concrete, user-configurable implementation of a {@link BitwardenAppCredential}.
+ * The concrete, user-configurable implementation of a {@link BitwardenBackedCredential}.
  * <p>
  * Instances of this class are what get created and saved in the Jenkins credential store
  * when a user adds a "Bitwarden-Backed Credential" from the UI.
  */
-public class BitwardenAppCredentialImpl extends BaseStandardCredentials implements BitwardenAppCredential {
+public class BitwardenBackedCredentialImpl extends BaseStandardCredentials implements BitwardenBackedCredential {
 
     /** The method to use for looking up the Bitwarden item ("name" or "id"). */
     private final String lookupMethod;
@@ -36,8 +35,8 @@ public class BitwardenAppCredentialImpl extends BaseStandardCredentials implemen
      * @param bitwardenItemName The name of the Bitwarden item to look up.
      */
     @DataBoundConstructor
-    public BitwardenAppCredentialImpl(@Nullable CredentialsScope scope, @Nullable String id, @Nullable String description,
-                                      @Nullable String lookupMethod, @Nullable String bitwardenItemId, @Nullable String bitwardenItemName) {
+    public BitwardenBackedCredentialImpl(@Nullable CredentialsScope scope, @Nullable String id, @Nullable String description,
+                                         @Nullable String lookupMethod, @Nullable String bitwardenItemId, @Nullable String bitwardenItemName) {
         super(scope, id, description);
         this.lookupMethod = lookupMethod;
         // Only store the relevant value based on the selected lookup method.

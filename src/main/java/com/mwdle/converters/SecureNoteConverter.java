@@ -1,6 +1,6 @@
 package com.mwdle.converters;
 
-import com.mwdle.BitwardenAppCredential;
+import com.mwdle.BitwardenBackedCredential;
 import com.mwdle.model.BitwardenItem;
 import hudson.Extension;
 import hudson.util.Secret;
@@ -15,7 +15,7 @@ public class SecureNoteConverter extends BitwardenItemConverter {
     }
 
     @Override
-    public StringCredentials convert(BitwardenAppCredential pointer, BitwardenItem item) {
+    public StringCredentials convert(BitwardenBackedCredential pointer, BitwardenItem item) {
         return new StringCredentialsImpl(pointer.getScope(), pointer.getId(), pointer.getDescription(), Secret.fromString(item.getNotes()));
     }
 }

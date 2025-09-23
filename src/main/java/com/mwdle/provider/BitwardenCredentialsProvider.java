@@ -3,7 +3,7 @@ package com.mwdle.provider;
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.mwdle.BitwardenAppCredential;
+import com.mwdle.BitwardenBackedCredential;
 import hudson.Extension;
 import hudson.model.ItemGroup;
 import jenkins.model.Jenkins;
@@ -30,9 +30,9 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             return Collections.emptyList();
         }
 
-        List<BitwardenAppCredential> pointers = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
+        List<BitwardenBackedCredential> pointers = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
                 .filter(p -> p != this)
-                .flatMap(p -> p.getCredentialsInItemGroup(BitwardenAppCredential.class, itemGroup, authentication, domainRequirements).stream())
+                .flatMap(p -> p.getCredentialsInItemGroup(BitwardenBackedCredential.class, itemGroup, authentication, domainRequirements).stream())
                 .toList();
 
         @SuppressWarnings("unchecked") List<C> result = pointers.stream().map(ptr -> (C) Proxy.newProxyInstance(BitwardenCredentialsProvider.class.getClassLoader(), new Class<?>[]{type}, new BitwardenItemProxy(ptr, itemGroup, authentication))).collect(Collectors.toList());

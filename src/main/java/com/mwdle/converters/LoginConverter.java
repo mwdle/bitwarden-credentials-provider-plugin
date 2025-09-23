@@ -2,7 +2,7 @@ package com.mwdle.converters;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.mwdle.BitwardenAppCredential;
+import com.mwdle.BitwardenBackedCredential;
 import com.mwdle.model.BitwardenItem;
 import com.mwdle.model.BitwardenLogin;
 import hudson.Extension;
@@ -16,7 +16,7 @@ public class LoginConverter extends BitwardenItemConverter {
     }
 
     @Override
-    public StandardUsernamePasswordCredentials convert(BitwardenAppCredential pointer, BitwardenItem item) {
+    public StandardUsernamePasswordCredentials convert(BitwardenBackedCredential pointer, BitwardenItem item) {
         BitwardenLogin loginData = item.getLogin();
         try {
             String username = (loginData.getUsername() != null) ? loginData.getUsername() : "";
