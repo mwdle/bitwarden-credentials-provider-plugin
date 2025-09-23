@@ -1,20 +1,34 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
 
+    <f:entry>
+        <div class="help-area">
+            <p>
+                This credential type acts as a pointer to an item in your Bitwarden vault.
+                Based on the type of the source Bitwarden item, it can be automatically resolved into different standard Jenkins credential types
+            </p>
+            <ul>
+                <li>A Bitwarden <b>Login</b> can be resolved as a <b>Username with password</b>.</li>
+                <li>A Bitwarden <b>Secure Note</b> can be resolved as <b>Secret text</b>.</li>
+                <li>A Bitwarden <b>SSH Key</b> can be resolved as an <b>SSH User with Private Key</b>.</li>
+            </ul>
+        </div>
+    </f:entry>
+
     <st:include page="id-and-description" class="${descriptor.clazz}"/>
 
-    <f:entry title="Lookup Method" field="lookupMethod">
-        <f:select />
-    </f:entry>
+    <f:radioBlock name="lookupMethod" value="name" title="By Name"
+                  checked="${instance.lookupMethod == null || instance.lookupMethod == 'name'}">
+        <f:entry title="Bitwarden Item Name" field="bitwardenItemName">
+            <f:textbox />
+        </f:entry>
+    </f:radioBlock>
 
-    <f:entry title="Bitwarden Item Name" field="bitwardenItemName"
-             help="Fill this in if you selected 'By Name' above.">
-        <f:textbox value="${instance.bitwardenItemName}" />
-    </f:entry>
-
-    <f:entry title="Bitwarden Item ID" field="bitwardenItemId"
-             help="Fill this in if you selected 'By ID' above.">
-        <f:textbox value="${instance.bitwardenItemId}" />
-    </f:entry>
+    <f:radioBlock name="lookupMethod" value="id" title="By ID"
+                  checked="${instance.lookupMethod == 'id'}">
+        <f:entry title="Bitwarden Item ID" field="bitwardenItemId">
+            <f:textbox />
+        </f:entry>
+    </f:radioBlock>
 
 </j:jelly>
