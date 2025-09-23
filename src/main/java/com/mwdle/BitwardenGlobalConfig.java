@@ -13,7 +13,6 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
@@ -21,7 +20,6 @@ import java.util.Collections;
 @Extension
 public class BitwardenGlobalConfig extends GlobalConfiguration {
 
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     private String serverUrl;
     private String apiCredentialId;
     private String masterPasswordCredentialId;
@@ -60,8 +58,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
 
         return new StandardListBoxModel()
                 .includeEmptyValue()
-                .includeMatchingAs(
-                        authentication,
+                .includeMatchingAs(SecurityContextHolder.getContext().getAuthentication(),
                         context,
                         StandardUsernamePasswordCredentials.class,
                         Collections.emptyList(),
@@ -79,8 +76,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
 
         return new StandardListBoxModel()
                 .includeEmptyValue()
-                .includeMatchingAs(
-                        authentication,
+                .includeMatchingAs(SecurityContextHolder.getContext().getAuthentication(),
                         context,
                         StringCredentials.class,
                         Collections.emptyList(),
