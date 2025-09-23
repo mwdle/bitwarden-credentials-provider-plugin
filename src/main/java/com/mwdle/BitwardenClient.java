@@ -1,6 +1,8 @@
 package com.mwdle;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mwdle.model.BitwardenItem;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 import java.io.BufferedReader;
@@ -14,27 +16,24 @@ import java.util.Map;
 
 public class BitwardenClient implements AutoCloseable {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final StandardUsernamePasswordCredentials apiCredentials;
     private final StringCredentials masterPassword;
-    private final String serverUrl;
     private final Path tempAppDataDir;
+    private final String sessionToken;
 
-    public BitwardenClient(StandardUsernamePasswordCredentials apiCredentials, StringCredentials masterPassword, String serverUrl) throws IOException {
+    public BitwardenClient(StandardUsernamePasswordCredentials apiCredentials, StringCredentials masterPassword, String serverUrl) throws IOException, InterruptedException {
         this.apiCredentials = apiCredentials;
         this.masterPassword = masterPassword;
-        this.serverUrl = serverUrl;
         // Create a unique temporary directory for this client instance.
         // This isolates the session from all other concurrent operations.
         this.tempAppDataDir = Files.createTempDirectory("bitwarden-cli-");
-    }
-
-    public String getSessionToken() throws IOException, InterruptedException {
         // Set server config if a URL is provided
-        if (this.serverUrl != null && !this.serverUrl.isEmpty()) {
-            executeCommand(new ProcessBuilder("bw", "config", "server", this.serverUrl));
+        if (serverUrl != null && !serverUrl.isEmpty()) {
+            executeCommand(new ProcessBuilder("bw", "config", "server", serverUrl));
         }
         login();
-        return unlock();
+        sessionToken = unlock();
     }
 
     private void login() throws IOException, InterruptedException {
@@ -90,12 +89,12 @@ public class BitwardenClient implements AutoCloseable {
     /**
      * Fetches a secret item from the vault by its name or ID.
      * @param nameOrId The name or ID of the item.
-     * @param sessionToken The active session token.
      * @return The raw JSON of the item as a String.
      */
-    public String getSecret(String nameOrId, String sessionToken) throws IOException, InterruptedException {
+    public BitwardenItem getSecret(String nameOrId) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("bw", "get", "item", nameOrId, "--session", sessionToken);
-        return executeCommand(pb);
+        String itemJson = executeCommand(pb);
+        return OBJECT_MAPPER.readValue(itemJson, BitwardenItem.class);
     }
 
     /**
