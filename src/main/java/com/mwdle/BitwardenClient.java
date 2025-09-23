@@ -13,9 +13,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BitwardenClient implements AutoCloseable {
 
+    private static final Logger LOGGER = Logger.getLogger(BitwardenClient.class.getName());
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final StandardUsernamePasswordCredentials apiCredentials;
     private final StringCredentials masterPassword;
@@ -37,27 +40,6 @@ public class BitwardenClient implements AutoCloseable {
         sync();
     }
 
-    private void login() throws IOException, InterruptedException {
-        // We use ProcessBuilder to securely pass credentials via environment variables
-        ProcessBuilder pb = new ProcessBuilder("bw", "login", "--apikey");
-        Map<String, String> env = pb.environment();
-        env.put("BW_CLIENTID", this.apiCredentials.getUsername());
-        env.put("BW_CLIENTSECRET", this.apiCredentials.getPassword().getPlainText());
-
-        // The login command doesn't produce useful stdout, but we check for errors
-        String result = executeCommand(pb);
-        // A real implementation would have more robust error checking
-        System.out.println("Login command executed. Result: " + result);
-    }
-
-    private String unlock() throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "unlock", "--raw", "--passwordenv", "BITWARDEN_MASTER_PASSWORD");
-        Map<String, String> env = pb.environment();
-        env.put("BITWARDEN_MASTER_PASSWORD", this.masterPassword.getSecret().getPlainText());
-
-        return executeCommand(pb);
-    }
-
     /**
      * A helper method to execute a shell command and return its standard output.
      * @param pb The configured ProcessBuilder.
@@ -68,7 +50,7 @@ public class BitwardenClient implements AutoCloseable {
         Map<String, String> env = pb.environment();
         env.put("BITWARDENCLI_APPDATA_DIR", this.tempAppDataDir.toAbsolutePath().toString());
 
-        pb.redirectErrorStream(true); // Combine stdout and stderr
+        pb.redirectErrorStream(true);
         Process process = pb.start();
 
         StringBuilder output = new StringBuilder();
@@ -87,10 +69,24 @@ public class BitwardenClient implements AutoCloseable {
         return output.toString().trim();
     }
 
+    private void login() throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder("bw", "login", "--apikey", "--quiet");
+        Map<String, String> env = pb.environment();
+        env.put("BW_CLIENTID", this.apiCredentials.getUsername());
+        env.put("BW_CLIENTSECRET", this.apiCredentials.getPassword().getPlainText());
+        executeCommand(pb);
+    }
+
+    private String unlock() throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder("bw", "unlock", "--raw", "--passwordenv", "BITWARDEN_MASTER_PASSWORD");
+        Map<String, String> env = pb.environment();
+        env.put("BITWARDEN_MASTER_PASSWORD", this.masterPassword.getSecret().getPlainText());
+
+        return executeCommand(pb);
+    }
+
     public void sync() throws IOException, InterruptedException {
-        System.out.println("Syncing Bitwarden vault...");
-        executeCommand(new ProcessBuilder("bw", "sync", "--session", sessionToken));
-        System.out.println("Sync complete.");
+        executeCommand(new ProcessBuilder("bw", "sync", "--quiet"));
     }
 
     /**
@@ -99,7 +95,9 @@ public class BitwardenClient implements AutoCloseable {
      * @return The raw JSON of the item as a String.
      */
     public BitwardenItem getSecret(String nameOrId) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "get", "item", nameOrId, "--session", sessionToken);
+        ProcessBuilder pb = new ProcessBuilder("bw", "get", "item", nameOrId);
+        Map<String, String> env = pb.environment();
+        env.put("BW_SESSION", this.sessionToken);
         String itemJson = executeCommand(pb);
         return OBJECT_MAPPER.readValue(itemJson, BitwardenItem.class);
     }
@@ -116,17 +114,18 @@ public class BitwardenClient implements AutoCloseable {
     @Override
     public void close() throws IOException {
         try {
-            executeCommand(new ProcessBuilder("bw", "logout"));
-            System.out.println("Logout command executed.");
+            executeCommand(new ProcessBuilder("bw", "logout", "--quiet"));
         } catch (Exception e) {
-            System.err.println("Failed to logout. Error: " + e.getMessage());
+            LOGGER.log(Level.WARNING,
+                    "Failed to log out of Bitwarden CLI session. This is generally not a critical error, as the temporary session directory will be deleted anyway. Error: {0}",
+                    e.getMessage());
         }
         try (java.util.stream.Stream<Path> walk = Files.walk(tempAppDataDir)) {
             walk.sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .forEach(file -> {
                         if (!file.delete()) {
-                            System.err.println("Failed to delete file during cleanup: " + file.getAbsolutePath());
+                            LOGGER.warning("Failed to delete file during cleanup: " + file.getAbsolutePath());
                         }
                     });
         }
