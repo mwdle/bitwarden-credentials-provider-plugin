@@ -1,8 +1,11 @@
-package com.mwdle;
+package com.mwdle.provider;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.mwdle.BitwardenAppCredential;
+import com.mwdle.BitwardenClient;
+import com.mwdle.BitwardenGlobalConfig;
 import com.mwdle.converters.BitwardenItemConverter;
 import com.mwdle.model.BitwardenItem;
 import hudson.model.ItemGroup;

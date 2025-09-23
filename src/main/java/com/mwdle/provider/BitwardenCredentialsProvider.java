@@ -1,8 +1,9 @@
-package com.mwdle;
+package com.mwdle.provider;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.mwdle.BitwardenAppCredential;
 import hudson.Extension;
 import hudson.model.ItemGroup;
 import jenkins.model.Jenkins;
