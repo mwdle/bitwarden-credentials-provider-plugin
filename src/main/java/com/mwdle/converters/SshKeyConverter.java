@@ -17,13 +17,23 @@ public class SshKeyConverter extends BitwardenItemConverter {
     @Override
     public BasicSSHUserPrivateKey convert(BitwardenAppCredential pointer, BitwardenItem item) {
         BitwardenSshKey sshKeyData = item.getSshKey();
-        // Parse the username from the end of the public key string
-        String publicKey = sshKeyData.getPublicKey();
-        String[] parts = publicKey.trim().split("\\s+");
-        String username = parts.length > 2 ? parts[2] : "";
-
+        String username = getUsername(sshKeyData);
         BasicSSHUserPrivateKey.DirectEntryPrivateKeySource privateKeySource = new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(sshKeyData.getPrivateKey());
 
         return new BasicSSHUserPrivateKey(pointer.getScope(), pointer.getId(), username, privateKeySource, "", pointer.getDescription());
+    }
+
+    private static String getUsername(BitwardenSshKey sshKeyData) {
+        String username = "";
+        String publicKey = sshKeyData.getPublicKey();
+        if (publicKey != null) {
+            String[] parts = publicKey.trim().split("\\s+");
+            if (parts.length > 2) {
+                // Get the last part, which is the comment (e.g., "user@host")
+                String comment = parts[parts.length - 1];
+                username = comment.split("@")[0];
+            }
+        }
+        return username;
     }
 }
