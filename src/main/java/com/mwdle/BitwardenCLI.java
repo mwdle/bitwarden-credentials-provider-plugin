@@ -1,6 +1,7 @@
 package com.mwdle;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mwdle.model.BitwardenItem;
 import com.mwdle.model.BitwardenStatus;
@@ -10,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -105,10 +107,24 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static BitwardenItem getSecret(String nameOrId, String sessionToken) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "get", "item", nameOrId);
-        pb.environment().put("BW_SESSION", sessionToken);
-        String itemJson = executeCommand(pb);
-        return OBJECT_MAPPER.readValue(itemJson, BitwardenItem.class);
+        try {
+            // First, try to get the item directly. This works for unique names and all IDs.
+            ProcessBuilder pb = new ProcessBuilder("bw", "get", "item", nameOrId);
+            pb.environment().put("BW_SESSION", sessionToken);
+            String itemJson = executeCommand(pb);
+            return OBJECT_MAPPER.readValue(itemJson, BitwardenItem.class);
+        } catch (IOException e) {
+            // If the command failed because of duplicate names...
+            if (e.getMessage().contains("More than one result was found")) {
+                // ...retry by listing all items with that name and taking the first one.
+                ProcessBuilder pb = new ProcessBuilder("bw", "list", "items", "--search", nameOrId);
+                pb.environment().put("BW_SESSION", sessionToken);
+                String listJson = executeCommand(pb);
+                List<BitwardenItem> items = OBJECT_MAPPER.readValue(listJson, new TypeReference<>() {});
+                return items.stream().filter(item -> nameOrId.equals(item.getName())).findFirst().orElse(null); // Return null if no exact match is found
+            }
+            throw e;
+        }
     }
 
     /**
