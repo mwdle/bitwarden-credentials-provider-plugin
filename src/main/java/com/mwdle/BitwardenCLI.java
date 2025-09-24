@@ -128,6 +128,21 @@ public final class BitwardenCLI {
     }
 
     /**
+     * Fetches a list of all items from the vault.
+     *
+     * @param sessionToken The active session token to use for authentication.
+     * @return A List of {@link BitwardenItem} objects.
+     * @throws IOException          If the CLI command fails or JSON parsing fails.
+     * @throws InterruptedException If the CLI command is interrupted.
+     */
+    public static List<BitwardenItem> listItems(String sessionToken) throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder("bw", "list", "items");
+        pb.environment().put("BW_SESSION", sessionToken);
+        String json = executeCommand(pb);
+        return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
+    }
+
+    /**
      * Configures the Bitwarden CLI to point to a specific server URL.
      *
      * @param serverUrl The URL of the self-hosted Bitwarden or Vaultwarden instance.
