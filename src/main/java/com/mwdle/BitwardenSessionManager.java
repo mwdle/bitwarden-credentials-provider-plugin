@@ -94,7 +94,7 @@ public class BitwardenSessionManager {
         }
         try {
             BitwardenStatus response = BitwardenCLI.status(this.sessionToken);
-            return "unlocked".equals(response.getStatus());
+            return response.getStatus().equals("unlocked");
         } catch (Exception e) {
             // If the status command fails for any reason the token is considered invalid
             return false;
@@ -111,8 +111,6 @@ public class BitwardenSessionManager {
             BitwardenCLI.configServer(serverUrl);
         }
         BitwardenCLI.login(apiKey);
-        String token = BitwardenCLI.unlock(masterPassword);
-        BitwardenCLI.sync();
-        return token;
+        return BitwardenCLI.unlock(masterPassword);
     }
 }
