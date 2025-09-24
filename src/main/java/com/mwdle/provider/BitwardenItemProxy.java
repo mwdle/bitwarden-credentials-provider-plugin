@@ -99,7 +99,7 @@ public class BitwardenItemProxy implements InvocationHandler, Serializable {
      */
     private StandardCredentials resolveSecret() throws IOException, InterruptedException {
         // Always synchronize the vault before fetching secrets to ensure they are up to date
-        BitwardenCLI.sync();
+        BitwardenCLI.sync(BitwardenSessionManager.get().getSessionToken());
         // Fetch the secret
         // Uses the singleton BitwardenSessionManager to get the current session token
         BitwardenItem item = BitwardenCLI.getSecret(pointer.getLookupValue(), BitwardenSessionManager.get().getSessionToken());
