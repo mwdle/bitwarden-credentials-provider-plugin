@@ -3,7 +3,6 @@ package com.mwdle;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.mwdle.model.BitwardenStatus;
-import com.mwdle.provider.BitwardenCredentialsProvider;
 import hudson.Extension;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
