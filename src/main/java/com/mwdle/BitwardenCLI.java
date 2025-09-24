@@ -74,8 +74,9 @@ public final class BitwardenCLI {
      * @throws IOException          If the CLI command fails.
      * @throws InterruptedException If the CLI command is interrupted.
      */
-    public static void sync() throws IOException, InterruptedException {
+    public static void sync(String sessionToken) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("bw", "sync", "--quiet");
+        pb.environment().put("BW_SESSION", sessionToken);
         executeCommand(pb);
     }
 
