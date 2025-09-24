@@ -1,7 +1,7 @@
 package com.mwdle.converters;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-import com.mwdle.BitwardenBackedCredential;
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.mwdle.model.BitwardenItem;
 import com.mwdle.model.BitwardenSshKey;
 import hudson.Extension;
@@ -15,12 +15,12 @@ public class SshKeyConverter extends BitwardenItemConverter {
     }
 
     @Override
-    public BasicSSHUserPrivateKey convert(BitwardenBackedCredential pointer, BitwardenItem item) {
+    public BasicSSHUserPrivateKey convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
         BitwardenSshKey sshKeyData = item.getSshKey();
         String username = getUsername(sshKeyData);
         BasicSSHUserPrivateKey.DirectEntryPrivateKeySource privateKeySource = new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(sshKeyData.getPrivateKey());
 
-        return new BasicSSHUserPrivateKey(pointer.getScope(), pointer.getId(), username, privateKeySource, "", pointer.getDescription());
+        return new BasicSSHUserPrivateKey(scope, id, username, privateKeySource, "", description);
     }
 
     private static String getUsername(BitwardenSshKey sshKeyData) {

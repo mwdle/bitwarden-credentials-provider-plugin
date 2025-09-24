@@ -1,6 +1,6 @@
 package com.mwdle.converters;
 
-import com.mwdle.BitwardenBackedCredential;
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.mwdle.model.BitwardenItem;
 import hudson.Extension;
 import hudson.util.Secret;
@@ -28,7 +28,7 @@ public class SecureNoteConverter extends BitwardenItemConverter {
      * Constructs a {@link StringCredentialsImpl} using the content of the {@code notes} field.
      */
     @Override
-    public StringCredentials convert(BitwardenBackedCredential pointer, BitwardenItem item) {
-        return new StringCredentialsImpl(pointer.getScope(), pointer.getId(), pointer.getDescription(), Secret.fromString(item.getNotes()));
+    public StringCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
+        return new StringCredentialsImpl(scope, id, description, Secret.fromString(item.getNotes()));
     }
 }

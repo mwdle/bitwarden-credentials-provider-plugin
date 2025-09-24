@@ -1,8 +1,8 @@
 package com.mwdle.converters;
 
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.mwdle.BitwardenBackedCredential;
 import com.mwdle.model.BitwardenItem;
 import com.mwdle.model.BitwardenLogin;
 import hudson.Extension;
@@ -31,12 +31,12 @@ public class LoginConverter extends BitwardenItemConverter {
      * This means that either the username or password field must always be present if the fetch succeeds.
      */
     @Override
-    public StandardUsernamePasswordCredentials convert(BitwardenBackedCredential pointer, BitwardenItem item) {
+    public StandardUsernamePasswordCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
         BitwardenLogin loginData = item.getLogin();
         try {
             String username = (loginData.getUsername() != null) ? loginData.getUsername() : "";
             String password = (loginData.getPassword() != null) ? loginData.getPassword() : "";
-            return new UsernamePasswordCredentialsImpl(pointer.getScope(), pointer.getId(), pointer.getDescription(), username, password);
+            return new UsernamePasswordCredentialsImpl(scope, id, description, username, password);
         } catch (Descriptor.FormException e) {
             // Should not happen when creating programmatically, but returning null is safe.
             return null;

@@ -1,7 +1,7 @@
 package com.mwdle.converters;
 
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.mwdle.BitwardenBackedCredential;
 import com.mwdle.model.BitwardenItem;
 import hudson.ExtensionPoint;
 import jenkins.model.Jenkins;
@@ -45,9 +45,11 @@ public abstract class BitwardenItemConverter implements ExtensionPoint {
     /**
      * Converts the Bitwarden item into a Jenkins credential.
      *
-     * @param pointer The original "pointer" credential from the Jenkins store.
-     * @param item    The parsed JSON of the Bitwarden item.
+     * @param scope       The scope for the new credential.
+     * @param id          The ID for the new credential.
+     * @param description The description for the new credential.
+     * @param item        The parsed JSON of the Bitwarden item.
      * @return The resulting Jenkins credential.
      */
-    public abstract StandardCredentials convert(BitwardenBackedCredential pointer, BitwardenItem item);
+    public abstract StandardCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item);
 }
