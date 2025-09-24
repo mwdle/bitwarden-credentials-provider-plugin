@@ -22,8 +22,19 @@ import java.util.concurrent.locks.ReentrantLock;
 @Extension
 public class BitwardenSessionManager {
 
+    /**
+     * A lock to ensure that the session token refresh process is thread-safe. This prevents
+     * multiple concurrent jobs from attempting to log in at the same time when the session
+     * is found to be invalid.
+     */
     private final ReentrantLock lock = new ReentrantLock();
+    /**
+     * The cached Bitwarden session token. This token is stored in memory and reused across
+     * builds to prevent API rate-limiting and improve secret fetching performance. It is refreshed by
+     * {@link #getNewSessionToken(StandardUsernamePasswordCredentials, StringCredentials, String)} when it becomes invalid.
+     */
     private String sessionToken;
+
 
     /**
      * Provides global access to the single instance of this manager, as managed by Jenkins.
