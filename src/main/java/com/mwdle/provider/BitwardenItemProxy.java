@@ -1,24 +1,17 @@
 package com.mwdle.provider;
 
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.mwdle.BitwardenBackedCredential;
-import com.mwdle.BitwardenClient;
-import com.mwdle.BitwardenGlobalConfig;
+import com.mwdle.BitwardenCLI;
+import com.mwdle.BitwardenSessionManager;
 import com.mwdle.converters.BitwardenItemConverter;
 import com.mwdle.model.BitwardenItem;
-import hudson.model.ItemGroup;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.Collections;
 
 /**
  * The lazy-loading mechanism for Bitwarden-backed credentials.
@@ -37,26 +30,16 @@ public class BitwardenItemProxy implements InvocationHandler, Serializable {
      * The original "pointer" credential containing the lookup information.
      */
     private final BitwardenBackedCredential pointer;
-    /**
-     * The Jenkins context (e.g., a Folder or the root Jenkins instance) in which the lookup is being performed.
-     */
-    private final ItemGroup<?> context;
-    /** The authentication context of the user or system performing the lookup. */
-    private final Authentication authentication;
     /** A transient, volatile field to cache the fully resolved credential after the first fetch. */
     private transient volatile StandardCredentials resolved;
 
     /**
      * Constructs a new proxy handler.
      *
-     * @param pointer The "pointer" credential that this proxy represents.
-     * @param context The Jenkins context for the credential lookup.
-     * @param authentication The authentication context for the lookup.
+     * @param pointer The Bitwarden-Backed Credential that this proxy represents.
      */
-    public BitwardenItemProxy(BitwardenBackedCredential pointer, ItemGroup<?> context, Authentication authentication) {
+    public BitwardenItemProxy(BitwardenBackedCredential pointer) {
         this.pointer = pointer;
-        this.context = context;
-        this.authentication = authentication;
     }
 
     /**
@@ -105,39 +88,28 @@ public class BitwardenItemProxy implements InvocationHandler, Serializable {
     }
 
     /**
-     * The main "slow path" method. This is only called once per proxy instance when a secret is first requested.
+     * Resolves the Bitwarden-Backed Credential into a real Jenkins credential object.
      * <p>
      * It performs the full, multi-second process of calling the Bitwarden CLI, fetching the item,
-     * and using the "Converter" system to produce the final, real Jenkins credential object.
+     * and using a converter system to produce the final, real Jenkins credential object.
      *
      * @return The fully resolved, real Jenkins credential.
      * @throws IOException If any part of the process fails.
      * @throws InterruptedException If the CLI process is interrupted.
      */
     private StandardCredentials resolveSecret() throws IOException, InterruptedException {
-        BitwardenGlobalConfig config = BitwardenGlobalConfig.get();
-        String apiKeyCredId = config.getApiCredentialId();
-        String masterPassCredId = config.getMasterPasswordCredentialId();
-
-        // Look up the credentials required to authenticate the Bitwarden CLI.
-        StandardUsernamePasswordCredentials apiKey = Jenkins.get().getExtensionList(CredentialsProvider.class).stream().filter(p -> !(p instanceof BitwardenCredentialsProvider)).flatMap(p -> p.getCredentialsInItemGroup(StandardUsernamePasswordCredentials.class, context, authentication, Collections.emptyList()).stream()).filter(c -> c.getId().equals(apiKeyCredId)).findFirst().orElse(null);
-        StringCredentials masterPassword = Jenkins.get().getExtensionList(CredentialsProvider.class).stream().filter(p -> !(p instanceof BitwardenCredentialsProvider)).flatMap(p -> p.getCredentialsInItemGroup(StringCredentials.class, context, authentication, Collections.emptyList()).stream()).filter(c -> c.getId().equals(masterPassCredId)).findFirst().orElse(null);
-        if (apiKey == null || masterPassword == null) {
-            throw new IOException("Could not find API Key or Master Password credentials configured for the Bitwarden plugin.");
+        // Always synchronize the vault before fetching secrets to ensure they are up to date
+        BitwardenCLI.sync();
+        // Fetch the secret
+        // Uses the singleton BitwardenSessionManager to get the current session token
+        BitwardenItem item = BitwardenCLI.getSecret(pointer.getLookupValue(), BitwardenSessionManager.get().getSessionToken());
+        if (item == null) {
+            return null;
         }
-
-        try (BitwardenClient client = new BitwardenClient(apiKey, masterPassword, config.getServerUrl())) {
-            BitwardenItem item = client.getSecret(pointer.getLookupValue());
-            if (item == null) {
-                return null;
-            }
-
-            // Find the correct converter for the fetched Bitwarden item.
-            BitwardenItemConverter converter = BitwardenItemConverter.findConverter(item);
-            if (converter != null) {
-                // Delegate the conversion to the specialist converter.
-                return converter.convert(pointer, item);
-            }
+        // Find the correct converter for the fetched Bitwarden item type
+        BitwardenItemConverter converter = BitwardenItemConverter.findConverter(item);
+        if (converter != null) {
+            return converter.convert(pointer, item);
         }
         return null;
     }

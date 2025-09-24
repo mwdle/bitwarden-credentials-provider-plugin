@@ -46,8 +46,7 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
 
         // For each pointer found, create a lazy-loading proxy object.
         // This is a fast, in-memory operation that keeps the UI responsive.
-        @SuppressWarnings("unchecked") List<C> result = pointers.stream().map(ptr -> (C) Proxy.newProxyInstance(BitwardenCredentialsProvider.class.getClassLoader(), new Class<?>[]{type}, // The proxy will implement the interface the pipeline is asking for.
-                new BitwardenItemProxy(ptr, itemGroup, authentication))).collect(Collectors.toList());
+        @SuppressWarnings("unchecked") List<C> result = pointers.stream().map(bitwardenBackedCredential -> (C) Proxy.newProxyInstance(BitwardenCredentialsProvider.class.getClassLoader(), new Class<?>[]{type}, new BitwardenItemProxy(bitwardenBackedCredential))).collect(Collectors.toList());
 
         return result;
     }
