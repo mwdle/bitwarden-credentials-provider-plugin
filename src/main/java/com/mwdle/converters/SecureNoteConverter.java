@@ -9,8 +9,6 @@ import hudson.util.Secret;
 import org.jenkinsci.plugins.plaincredentials.impl.FileCredentialsImpl;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 
-import java.util.UUID;
-
 /**
  * Converts a Bitwarden 'Secure Note' item into a Jenkins credential.
  * If the name ends with ".env", treat it as a {@link FileCredentialsImpl}.
@@ -37,7 +35,7 @@ public class SecureNoteConverter extends BitwardenItemConverter {
     @Override
     public StandardCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
         if (item.getName().toLowerCase().endsWith(".env")) {
-            return new FileCredentialsImpl(scope, id, description, UUID.randomUUID().toString(), SecretBytes.fromString(item.getNotes()));
+            return new FileCredentialsImpl(scope, id, description, item.getName(), SecretBytes.fromString(item.getNotes()));
         } else {
             return new StringCredentialsImpl(scope, id, description, Secret.fromString(item.getNotes()));
         }
