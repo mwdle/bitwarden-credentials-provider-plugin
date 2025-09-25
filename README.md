@@ -6,8 +6,6 @@
 
 The **Bitwarden Credentials Provider** is a [Jenkins](https://jenkins.io) plugin that dynamically exposes every item in your [Bitwarden](https://bitwarden.com/) vault as a native Jenkins credential. It allows pipeline authors to access any secret on the fly by its name or ID, without requiring an administrator to pre-configure mappings in the Jenkins UI.
 
-This "read-only, implicitly exposed" model dramatically simplifies credential management in a CI/CD environment.
-
 ## Table of Contents
 
 - [How It Works](#how-it-works)
@@ -35,29 +33,27 @@ On every credential request, the plugin:
 
 ## Getting Started
 
-### 1. Prerequisites
-
-The Bitwarden CLI (`bw`) must be installed and available in the `PATH` on the Jenkins controller machine or container, for example:
-
-```bash
-wget -O bw.zip 'https://bitwarden.com/download/?app=cli&platform=linux' && \
-unzip bw.zip && \
-install bw /usr/local/bin/ && \
-rm bw.zip bw
-```
-
-
-### 2. Plugin Configuration
-
 You must first configure the plugin's global settings in **Manage Jenkins > Configure System**.
 
 -   **Bitwarden Server URL:** For self-hosted instances like Vaultwarden. Leave blank for the official Bitwarden cloud.
 -   **Bitwarden API Key Credential:** Select a Jenkins "Username with password" credential that stores your Bitwarden service account's Client ID and Client Secret.
 -   **Bitwarden Master Password Credential:** Select a Jenkins "Secret text" credential that stores your service account's Master Password.
 
+### Configuration as Code (JCasC)
+
+You can fully configure this plugin's global settings via JCasC.
+
+```yaml
+unclassified:
+  bitwardenGlobalConfig:
+    serverUrl: "https://vault.example.com"
+    apiCredentialId: "bitwarden-api-key"
+    masterPasswordCredentialId: "bitwarden-master-password"
+```
+
 ## Usage in Pipeline
 
-This plugin makes every item in your vault available as a Jenkins credential. For maximum flexibility, each Bitwarden item is exposed **twice**:
+This plugin makes every item in your vault available as a Jenkins credential within Jenkins pipelines. For maximum flexibility, each Bitwarden item is exposed **twice**:
 
 1.  Once where the `credentialsId` is the item's **Name**.
 2.  Once where the `credentialsId` is the item's **UUID**.
@@ -92,18 +88,6 @@ The plugin can automatically convert Bitwarden items into the following Jenkins 
 | Secure Note         | `StringCredentials`                   | The default for any secure note.                                   |
 | Secure Note         | `FileCredentials`                     | If the note's name ends with `.env`. Useful for Docker Compose.    |
 | SSH Key             | `SSHUserPrivateKey`                   | The username is parsed from the public key's comment field.        |
-
-## Configuration as Code (JCasC)
-
-You can fully configure this plugin's global settings via JCasC.
-
-```yaml
-unclassified:
-  bitwardenGlobalConfig:
-    serverUrl: "https://vault.example.com"
-    apiCredentialId: "bitwarden-api-key"
-    masterPasswordCredentialId: "bitwarden-master-password"
-```
 
 ## License
 
