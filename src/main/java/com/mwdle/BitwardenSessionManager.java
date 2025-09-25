@@ -106,9 +106,10 @@ public class BitwardenSessionManager {
      */
     private Secret getNewSessionToken(StandardUsernamePasswordCredentials apiKey, StringCredentials masterPassword, String serverUrl) throws IOException, InterruptedException {
         BitwardenCLI.logout();
-        if (serverUrl != null && !serverUrl.isEmpty()) {
-            BitwardenCLI.configServer(serverUrl);
+        if (serverUrl == null || serverUrl.isEmpty()) {
+            serverUrl = "https://vault.bitwarden.com";
         }
+        BitwardenCLI.configServer(serverUrl);
         BitwardenCLI.login(apiKey);
         return BitwardenCLI.unlock(masterPassword);
     }
