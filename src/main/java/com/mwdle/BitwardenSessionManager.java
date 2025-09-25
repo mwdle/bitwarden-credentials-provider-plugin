@@ -2,6 +2,7 @@ package com.mwdle;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.mwdle.cli.BitwardenCLI;
 import com.mwdle.model.BitwardenStatus;
 import hudson.Extension;
 import hudson.util.Secret;
@@ -134,7 +135,18 @@ public class BitwardenSessionManager {
             serverUrl = "https://vault.bitwarden.com";
         }
         BitwardenCLI.configServer(serverUrl);
-        BitwardenCLI.login(apiKey);
-        return BitwardenCLI.unlock(masterPassword);
+        try {
+            BitwardenCLI.login(apiKey);
+        } catch (IOException e) {
+            throw new BitwardenAuthenticationException(
+                    "Bitwarden login failed. Please check the API Key (Client ID/Secret) and server URL in the global configuration.",
+                    e);
+        }
+        try {
+            return BitwardenCLI.unlock(masterPassword);
+        } catch (IOException e) {
+            throw new BitwardenAuthenticationException(
+                    "Bitwarden unlock failed. Please check the Master Password credential.", e);
+        }
     }
 }

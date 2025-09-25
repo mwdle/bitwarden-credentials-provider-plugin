@@ -1,4 +1,4 @@
-package com.mwdle;
+package com.mwdle.cli;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -10,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -20,10 +22,26 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
  * This class contains only static methods and holds no state. It is responsible for
  * the low-level logic of constructing and running {@link ProcessBuilder} commands,
  * acting as a thin wrapper around the {@code bw} executable.
+ * It uses {@link BitwardenExecutableManager} to locate and manage the CLI binary.
  */
 public final class BitwardenCLI {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    /**
+     * Creates a ProcessBuilder for a Bitwarden CLI command, using the managed executable.
+     * This centralizes the logic for finding the 'bw' executable path.
+     *
+     * @param command The arguments to pass to the 'bw' command (e.g., "login", "--apikey").
+     * @return A configured ProcessBuilder instance.
+     */
+    private static ProcessBuilder bitwardenCommand(String... command) {
+        String executablePath = BitwardenExecutableManager.INSTANCE.getExecutablePath();
+        List<String> commandParts = new ArrayList<>();
+        commandParts.add(executablePath);
+        commandParts.addAll(Arrays.asList(command));
+        return new ProcessBuilder(commandParts);
+    }
 
     /**
      * Logs into the Bitwarden CLI using the API key.
@@ -33,7 +51,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void login(StandardUsernamePasswordCredentials apiKey) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "login", "--apikey", "--quiet");
+        ProcessBuilder pb = bitwardenCommand("login", "--apikey", "--quiet");
         Map<String, String> env = pb.environment();
         env.put("BW_CLIENTID", apiKey.getUsername());
         env.put("BW_CLIENTSECRET", apiKey.getPassword().getPlainText());
@@ -47,7 +65,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void logout() throws InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "logout");
+        ProcessBuilder pb = bitwardenCommand("logout");
         try {
             executeCommand(pb);
         } catch (IOException ignored) {
@@ -64,7 +82,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static Secret unlock(StringCredentials masterPassword) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "unlock", "--raw", "--passwordenv", "BITWARDEN_MASTER_PASSWORD");
+        ProcessBuilder pb = bitwardenCommand("unlock", "--raw", "--passwordenv", "BITWARDEN_MASTER_PASSWORD");
         Map<String, String> env = pb.environment();
         env.put("BITWARDEN_MASTER_PASSWORD", masterPassword.getSecret().getPlainText());
         return Secret.fromString(executeCommand(pb));
@@ -77,7 +95,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void sync(Secret sessionToken) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "sync", "--quiet");
+        ProcessBuilder pb = bitwardenCommand("sync", "--quiet");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         executeCommand(pb);
     }
@@ -91,7 +109,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static BitwardenStatus status(Secret sessionToken) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "status");
+        ProcessBuilder pb = bitwardenCommand("status");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
         return OBJECT_MAPPER.readValue(json, BitwardenStatus.class);
@@ -106,7 +124,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static List<BitwardenItem> listItems(Secret sessionToken) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("bw", "list", "items");
+        ProcessBuilder pb = bitwardenCommand("list", "items");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
         return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
@@ -120,7 +138,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void configServer(String serverUrl) throws IOException, InterruptedException {
-        executeCommand(new ProcessBuilder("bw", "config", "server", serverUrl));
+        executeCommand(bitwardenCommand("config", "server", serverUrl));
     }
 
     /**

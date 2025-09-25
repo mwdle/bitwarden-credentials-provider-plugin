@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.mwdle.cli.BitwardenCLI;
 import com.mwdle.converters.BitwardenItemConverter;
 import com.mwdle.model.BitwardenItem;
 import hudson.Extension;
@@ -60,6 +61,8 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             BitwardenCLI.sync(BitwardenSessionManager.get().getSessionToken());
             bitwardenItems =
                     BitwardenCLI.listItems(BitwardenSessionManager.get().getSessionToken());
+        } catch (BitwardenAuthenticationException e) {
+            throw new RuntimeException(e);
         } catch (IOException | InterruptedException e) {
             return Collections.emptyList();
         }
@@ -70,12 +73,10 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             if (converter != null) {
                 String description = String.format("Bitwarden: %s (ID: %s)", item.getName(), item.getId());
                 // Create the credential twice, to allow fetching it both by id OR name
-                @SuppressWarnings("unchecked")
-                C credByName = (C) converter.convert(CredentialsScope.GLOBAL, item.getName(), description, item);
-                result.add(credByName);
-                @SuppressWarnings("unchecked")
-                C credById = (C) converter.convert(CredentialsScope.GLOBAL, item.getId(), description, item);
-                result.add(credById);
+                Credentials credential = converter.convert(CredentialsScope.GLOBAL, item.getName(), description, item);
+                if (type.isInstance(credential)) result.add(type.cast(credential));
+                credential = converter.convert(CredentialsScope.GLOBAL, item.getId(), description, item);
+                if (type.isInstance(credential)) result.add(type.cast(credential));
             }
         });
 

@@ -1,0 +1,141 @@
+package com.mwdle.cli;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import jenkins.model.Jenkins;
+
+/**
+ * Manages the Bitwarden CLI executable, ensuring it is downloaded and available.
+ * This class handles OS detection, downloads the appropriate binary from its zip archive, and makes it executable.
+ */
+public final class BitwardenExecutableManager {
+
+    private static final Logger LOGGER = Logger.getLogger(BitwardenExecutableManager.class.getName());
+    public static final BitwardenExecutableManager INSTANCE = new BitwardenExecutableManager();
+    private final String executablePath;
+
+    private BitwardenExecutableManager() {
+        this.executablePath = initializeExecutable();
+    }
+
+    /**
+     * Gets the absolute path to the managed Bitwarden CLI executable.
+     *
+     * @return The full path to the 'bw' executable.
+     */
+    public String getExecutablePath() {
+        if (executablePath == null) {
+            throw new IllegalStateException(
+                    "Bitwarden executable could not be initialized. Please check the Jenkins logs for errors.");
+        }
+        return executablePath;
+    }
+
+    /**
+     * The core logic to detect the OS, determine the target path, and download the executable if it doesn't exist.
+     *
+     * @return The path to the executable, or null if initialization fails.
+     */
+    private String initializeExecutable() {
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            String downloadUrl;
+            String executableName;
+
+            if (os.contains("win")) {
+                downloadUrl = "https://bitwarden.com/download/?app=cli&platform=windows";
+                executableName = "bw.exe";
+            } else if (os.contains("mac")) {
+                downloadUrl = "https://bitwarden.com/download/?app=cli&platform=macos";
+                executableName = "bw";
+            } else {
+                downloadUrl = "https://bitwarden.com/download/?app=cli&platform=linux";
+                executableName = "bw";
+            }
+
+            File pluginBinDir = getPluginBinDirectory();
+            File executableFile = new File(pluginBinDir, executableName);
+
+            if (!executableFile.exists()) {
+                LOGGER.info("Bitwarden CLI not found. Downloading and extracting from: " + downloadUrl);
+                downloadAndExtract(new URL(downloadUrl), executableFile);
+            }
+
+            return executableFile.getAbsolutePath();
+
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize Bitwarden executable", e);
+            return null;
+        }
+    }
+
+    /**
+     * Downloads the zip archive, extracts the executable, and sets the necessary execute permissions.
+     * @param downloadUrl the URL of the zip archive to download
+     * @param targetFile the destination file for the extracted executable
+     * @throws IOException if the download or extraction fails
+     */
+    private void downloadAndExtract(URL downloadUrl, File targetFile) throws IOException {
+        File tempZip = File.createTempFile("bw-cli", ".zip");
+        try {
+            try (InputStream in = downloadUrl.openStream()) {
+                Files.copy(in, tempZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            try (ZipFile zipFile = new ZipFile(tempZip)) {
+                Enumeration<? extends ZipEntry> entries = zipFile.entries();
+                boolean foundExecutable = false;
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    if (entry.getName().equalsIgnoreCase("bw")
+                            || entry.getName().equalsIgnoreCase("bw.exe")) {
+                        try (InputStream zipInputStream = zipFile.getInputStream(entry)) {
+                            Files.copy(zipInputStream, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                            foundExecutable = true;
+                            break;
+                        }
+                    }
+                }
+                if (!foundExecutable) {
+                    throw new IOException("Could not find 'bw' or 'bw.exe' executable in the downloaded zip file.");
+                }
+            }
+        } finally {
+            if (!tempZip.delete()) {
+                LOGGER.warning("Could not delete temporary zip file: " + tempZip.getAbsolutePath());
+            }
+        }
+
+        if (targetFile.setExecutable(true, true)) {
+            LOGGER.info("Made Bitwarden CLI executable: " + targetFile.getAbsolutePath());
+        } else {
+            LOGGER.warning("Could not set executable permission on Bitwarden CLI.");
+        }
+    }
+
+    /**
+     * Gets a dedicated 'bin' directory within this plugin's home folder.
+     *
+     * @return A file handle to the 'bin' directory.
+     */
+    private File getPluginBinDirectory() {
+        File pluginsDir = new File(Jenkins.get().getRootDir(), "plugins");
+        File pluginDir = new File(pluginsDir, "bitwarden-credentials-provider-plugin");
+        File binDir = new File(pluginDir, "bin");
+        if (!binDir.exists()) {
+            if (!binDir.mkdirs()) {
+                LOGGER.warning("Could not create plugin bin directory: " + binDir.getAbsolutePath());
+            }
+        }
+        return binDir;
+    }
+}
