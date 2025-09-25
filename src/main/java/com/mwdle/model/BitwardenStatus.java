@@ -1,6 +1,7 @@
 package com.mwdle.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Represents the JSON response from the {@code bw status} command.
@@ -9,6 +10,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * status of the Bitwarden CLI session.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+// Suppress SpotBugs warning for fields populated by the Jackson JSON parser
+@SuppressFBWarnings("UWF_UNWRITTEN_FIELD")
 public class BitwardenStatus {
     /**
      * The current status of the vault, e.g., "unlocked", "locked", or "unauthenticated".

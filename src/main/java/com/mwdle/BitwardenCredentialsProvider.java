@@ -8,14 +8,13 @@ import com.mwdle.converters.BitwardenItemConverter;
 import com.mwdle.model.BitwardenItem;
 import hudson.Extension;
 import hudson.model.ItemGroup;
-import org.springframework.security.core.Authentication;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.springframework.security.core.Authentication;
 
 /**
  * This provider is responsible for resolving Bitwarden credentials into real, usable Jenkins credentials.
@@ -46,7 +45,11 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
      */
     @Override
     @Nonnull
-    public <C extends Credentials> List<C> getCredentialsInItemGroup(@Nonnull Class<C> type, @Nullable ItemGroup itemGroup, @Nullable Authentication authentication, @Nonnull List<DomainRequirement> domainRequirements) {
+    public <C extends Credentials> List<C> getCredentialsInItemGroup(
+            @Nonnull Class<C> type,
+            @Nullable ItemGroup itemGroup,
+            @Nullable Authentication authentication,
+            @Nonnull List<DomainRequirement> domainRequirements) {
 
         if (itemGroup == null || authentication == null) {
             return Collections.emptyList();
@@ -55,7 +58,8 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
         List<BitwardenItem> bitwardenItems;
         try {
             BitwardenCLI.sync(BitwardenSessionManager.get().getSessionToken());
-            bitwardenItems = BitwardenCLI.listItems(BitwardenSessionManager.get().getSessionToken());
+            bitwardenItems =
+                    BitwardenCLI.listItems(BitwardenSessionManager.get().getSessionToken());
         } catch (IOException | InterruptedException e) {
             return Collections.emptyList();
         }
@@ -66,9 +70,11 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             if (converter != null) {
                 String description = String.format("Bitwarden: %s (ID: %s)", item.getName(), item.getId());
                 // Create the credential twice, to allow fetching it both by id OR name
-                @SuppressWarnings("unchecked") C credByName = (C) converter.convert(CredentialsScope.GLOBAL, item.getName(), description, item);
+                @SuppressWarnings("unchecked")
+                C credByName = (C) converter.convert(CredentialsScope.GLOBAL, item.getName(), description, item);
                 result.add(credByName);
-                @SuppressWarnings("unchecked") C credById = (C) converter.convert(CredentialsScope.GLOBAL, item.getId(), description, item);
+                @SuppressWarnings("unchecked")
+                C credById = (C) converter.convert(CredentialsScope.GLOBAL, item.getId(), description, item);
                 result.add(credById);
             }
         });

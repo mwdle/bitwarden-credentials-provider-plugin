@@ -20,7 +20,8 @@ public class LoginConverter extends BitwardenItemConverter {
      */
     @Override
     public boolean canConvert(BitwardenItem item) {
-        return item.getLogin() != null && (item.getLogin().getUsername() != null || item.getLogin().getPassword() != null);
+        return item.getLogin() != null
+                && (item.getLogin().getUsername() != null || item.getLogin().getPassword() != null);
     }
 
     /**
@@ -31,7 +32,8 @@ public class LoginConverter extends BitwardenItemConverter {
      * This means that either the username or password field must always be present if the fetch succeeds.
      */
     @Override
-    public StandardUsernamePasswordCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
+    public StandardUsernamePasswordCredentials convert(
+            CredentialsScope scope, String id, String description, BitwardenItem item) {
         BitwardenLogin loginData = item.getLogin();
         try {
             String username = (loginData.getUsername() != null) ? loginData.getUsername() : "";

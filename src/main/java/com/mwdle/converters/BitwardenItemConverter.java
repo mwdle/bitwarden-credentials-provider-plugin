@@ -22,8 +22,7 @@ public abstract class BitwardenItemConverter implements ExtensionPoint {
      * @return A suitable {@link BitwardenItemConverter} instance, or {@code null} if none are found.
      */
     public static BitwardenItemConverter findConverter(BitwardenItem item) {
-        return Jenkins.get().getExtensionList(BitwardenItemConverter.class)
-                .stream()
+        return Jenkins.get().getExtensionList(BitwardenItemConverter.class).stream()
                 .filter(converter -> converter.canConvert(item))
                 .findFirst()
                 .orElse(null);
@@ -51,5 +50,6 @@ public abstract class BitwardenItemConverter implements ExtensionPoint {
      * @param item        The parsed JSON of the Bitwarden item.
      * @return The resulting Jenkins credential.
      */
-    public abstract StandardCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item);
+    public abstract StandardCredentials convert(
+            CredentialsScope scope, String id, String description, BitwardenItem item);
 }

@@ -5,12 +5,11 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.mwdle.model.BitwardenStatus;
 import hudson.Extension;
 import hudson.util.Secret;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.locks.ReentrantLock;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 /**
  * A thread-safe singleton that manages and caches a single, global Bitwarden session token.
@@ -34,7 +33,6 @@ public class BitwardenSessionManager {
      * {@link #getNewSessionToken(StandardUsernamePasswordCredentials, StringCredentials, String)} when it becomes invalid.
      */
     private Secret sessionToken;
-
 
     /**
      * Provides global access to the single instance of this manager, as managed by Jenkins.
@@ -69,11 +67,35 @@ public class BitwardenSessionManager {
 
             // If we are the thread responsible for refreshing, perform the full login.
             BitwardenGlobalConfig config = BitwardenGlobalConfig.get();
-            StandardUsernamePasswordCredentials apiKey = Jenkins.get().getExtensionList(CredentialsProvider.class).stream().filter(p -> !(p instanceof BitwardenCredentialsProvider)).flatMap(p -> p.getCredentialsInItemGroup(StandardUsernamePasswordCredentials.class, Jenkins.get(), Jenkins.getAuthentication2(), Collections.emptyList()).stream()).filter(c -> c.getId().equals(config.getApiCredentialId())).findFirst().orElse(null);
-            StringCredentials masterPassword = Jenkins.get().getExtensionList(CredentialsProvider.class).stream().filter(p -> !(p instanceof BitwardenCredentialsProvider)).flatMap(p -> p.getCredentialsInItemGroup(StringCredentials.class, Jenkins.get(), Jenkins.getAuthentication2(), Collections.emptyList()).stream()).filter(c -> c.getId().equals(config.getMasterPasswordCredentialId())).findFirst().orElse(null);
+            StandardUsernamePasswordCredentials apiKey =
+                    Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
+                            .filter(p -> !(p instanceof BitwardenCredentialsProvider))
+                            .flatMap(p -> p
+                                    .getCredentialsInItemGroup(
+                                            StandardUsernamePasswordCredentials.class,
+                                            Jenkins.get(),
+                                            Jenkins.getAuthentication2(),
+                                            Collections.emptyList())
+                                    .stream())
+                            .filter(c -> c.getId().equals(config.getApiCredentialId()))
+                            .findFirst()
+                            .orElse(null);
+            StringCredentials masterPassword = Jenkins.get().getExtensionList(CredentialsProvider.class).stream()
+                    .filter(p -> !(p instanceof BitwardenCredentialsProvider))
+                    .flatMap(p -> p
+                            .getCredentialsInItemGroup(
+                                    StringCredentials.class,
+                                    Jenkins.get(),
+                                    Jenkins.getAuthentication2(),
+                                    Collections.emptyList())
+                            .stream())
+                    .filter(c -> c.getId().equals(config.getMasterPasswordCredentialId()))
+                    .findFirst()
+                    .orElse(null);
 
             if (apiKey == null || masterPassword == null) {
-                throw new IOException("Could not find API Key or Master Password credentials configured for the Bitwarden plugin.");
+                throw new IOException(
+                        "Could not find API Key or Master Password credentials configured for the Bitwarden plugin.");
             }
 
             return this.sessionToken = getNewSessionToken(apiKey, masterPassword, config.getServerUrl());
@@ -104,7 +126,9 @@ public class BitwardenSessionManager {
      * Performs the full authentication sequence by orchestrating calls to the
      * {@link BitwardenCLI} utility, and returns a new session token.
      */
-    private Secret getNewSessionToken(StandardUsernamePasswordCredentials apiKey, StringCredentials masterPassword, String serverUrl) throws IOException, InterruptedException {
+    private Secret getNewSessionToken(
+            StandardUsernamePasswordCredentials apiKey, StringCredentials masterPassword, String serverUrl)
+            throws IOException, InterruptedException {
         BitwardenCLI.logout();
         if (serverUrl == null || serverUrl.isEmpty()) {
             serverUrl = "https://vault.bitwarden.com";

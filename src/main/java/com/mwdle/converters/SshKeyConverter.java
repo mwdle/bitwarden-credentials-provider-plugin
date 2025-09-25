@@ -18,7 +18,8 @@ public class SshKeyConverter extends BitwardenItemConverter {
     public BasicSSHUserPrivateKey convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
         BitwardenSshKey sshKeyData = item.getSshKey();
         String username = getUsername(sshKeyData);
-        BasicSSHUserPrivateKey.DirectEntryPrivateKeySource privateKeySource = new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(sshKeyData.getPrivateKey());
+        BasicSSHUserPrivateKey.DirectEntryPrivateKeySource privateKeySource =
+                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(sshKeyData.getPrivateKey());
 
         return new BasicSSHUserPrivateKey(scope, id, username, privateKeySource, "", description);
     }

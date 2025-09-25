@@ -35,7 +35,8 @@ public class SecureNoteConverter extends BitwardenItemConverter {
     @Override
     public StandardCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
         if (item.getName().toLowerCase().endsWith(".env")) {
-            return new FileCredentialsImpl(scope, id, description, item.getName(), SecretBytes.fromString(item.getNotes()));
+            return new FileCredentialsImpl(
+                    scope, id, description, item.getName(), SecretBytes.fromString(item.getNotes()));
         } else {
             return new StringCredentialsImpl(scope, id, description, Secret.fromString(item.getNotes()));
         }

@@ -6,6 +6,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
+import java.util.Collections;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -14,8 +15,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.util.Collections;
 
 /**
  * Manages the system-wide configuration for the Bitwarden Credentials Provider plugin.
@@ -51,9 +50,17 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     }
 
     // --- GETTERS ---
-    public String getServerUrl() { return serverUrl; }
-    public String getApiCredentialId() { return apiCredentialId; }
-    public String getMasterPasswordCredentialId() { return masterPasswordCredentialId; }
+    public String getServerUrl() {
+        return serverUrl;
+    }
+
+    public String getApiCredentialId() {
+        return apiCredentialId;
+    }
+
+    public String getMasterPasswordCredentialId() {
+        return masterPasswordCredentialId;
+    }
 
     // --- SETTERS ---
     @DataBoundSetter
@@ -61,11 +68,13 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
         this.serverUrl = serverUrl;
         save();
     }
+
     @DataBoundSetter
     public void setApiCredentialId(String apiCredentialId) {
         this.apiCredentialId = apiCredentialId;
         save();
     }
+
     @DataBoundSetter
     public void setMasterPasswordCredentialId(String masterPasswordCredentialId) {
         this.masterPasswordCredentialId = masterPasswordCredentialId;
@@ -83,7 +92,8 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
      * @return A {@link ListBoxModel} containing the credential options.
      */
     @POST
-    public ListBoxModel doFillApiCredentialIdItems(@AncestorInPath Jenkins context, @QueryParameter String apiCredentialId) {
+    public ListBoxModel doFillApiCredentialIdItems(
+            @AncestorInPath Jenkins context, @QueryParameter String apiCredentialId) {
         // Only administrators should be able to see this list of credentials.
         context.checkPermission(Jenkins.ADMINISTER);
         return new StandardListBoxModel()
@@ -96,9 +106,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
                         // Filter to show only credentials stored in the global and system scope.
                         CredentialsMatchers.anyOf(
                                 CredentialsMatchers.withScope(CredentialsScope.SYSTEM),
-                                CredentialsMatchers.withScope(CredentialsScope.GLOBAL)
-                        )
-                )
+                                CredentialsMatchers.withScope(CredentialsScope.GLOBAL)))
                 .includeCurrentValue(apiCredentialId);
     }
 
@@ -110,7 +118,8 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
      * @return A {@link ListBoxModel} containing the credential options.
      */
     @POST
-    public ListBoxModel doFillMasterPasswordCredentialIdItems(@AncestorInPath Jenkins context, @QueryParameter String masterPasswordCredentialId) {
+    public ListBoxModel doFillMasterPasswordCredentialIdItems(
+            @AncestorInPath Jenkins context, @QueryParameter String masterPasswordCredentialId) {
         // Only administrators should be able to see this list of credentials.
         context.checkPermission(Jenkins.ADMINISTER);
         return new StandardListBoxModel()
@@ -123,9 +132,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
                         // Filter to show only credentials stored in the global and system scope.
                         CredentialsMatchers.anyOf(
                                 CredentialsMatchers.withScope(CredentialsScope.SYSTEM),
-                                CredentialsMatchers.withScope(CredentialsScope.GLOBAL)
-                        )
-                )
+                                CredentialsMatchers.withScope(CredentialsScope.GLOBAL)))
                 .includeCurrentValue(masterPasswordCredentialId);
     }
 }

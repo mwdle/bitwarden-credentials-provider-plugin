@@ -6,14 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mwdle.model.BitwardenItem;
 import com.mwdle.model.BitwardenStatus;
 import hudson.util.Secret;
-import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 /**
  * A utility class for executing Bitwarden CLI commands.
@@ -136,7 +135,8 @@ public final class BitwardenCLI {
         pb.redirectErrorStream(true);
         Process process = pb.start();
         StringBuilder output = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader =
+                new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 output.append(line);

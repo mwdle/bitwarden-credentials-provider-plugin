@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    A Jenkins credentials provider for Bitwarden, allowing pipelines to fetch secrets and use them as native Jenkins credentials.
+</div>

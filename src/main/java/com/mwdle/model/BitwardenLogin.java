@@ -1,11 +1,14 @@
 package com.mwdle.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Represents the nested 'login' object within a Bitwarden item JSON.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+// Suppress SpotBugs warning for fields populated by the Jackson JSON parser
+@SuppressFBWarnings("UWF_UNWRITTEN_FIELD")
 public class BitwardenLogin {
     /**
      * The username associated with the login.
