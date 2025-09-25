@@ -24,7 +24,25 @@ import java.util.List;
 public class BitwardenCredentialsProvider extends CredentialsProvider {
 
     /**
-     * {@inheritDoc}
+     * Called by Jenkins whenever a build needs to resolve credentials. This implementation fetches the
+     * complete list of items from the Bitwarden vault and dynamically converts them into Jenkins
+     * credentials on the fly.
+     * <p>
+     * For each item retrieved from Bitwarden, this method creates <strong>two</strong> in-memory Jenkins
+     * credentials:
+     * <ol>
+     * <li>One where the credential ID is the Bitwarden item's <strong>name</strong>.</li>
+     * <li>One where the credential ID is the Bitwarden item's <strong>UUID</strong>.</li>
+     * </ol>
+     * This allows pipeline authors to reference the same secret using either its human-readable name or its
+     * unique, stable ID (e.g., {@code credentialsId: 'My Production API Key'}) or
+     * {@code credentialsId: 'a1b2c3d4-e5f6-...'}).
+     *
+     * @param type The class of credentials being requested.
+     * @param itemGroup The context in which the credentials are being requested.
+     * @param authentication The authentication context of the user or process.
+     * @param domainRequirements Any domain requirements for the credentials.
+     * @return A list of dynamically-generated credentials matching the request.
      */
     @Override
     @Nonnull
