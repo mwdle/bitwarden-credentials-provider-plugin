@@ -54,13 +54,13 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void login(StandardUsernamePasswordCredentials apiKey) throws IOException, InterruptedException {
-        LOGGER.info("BitwardenCLI: Logging in with API key credentials.");
+        LOGGER.info("Logging in with API key credentials.");
         ProcessBuilder pb = bitwardenCommand("login", "--apikey", "--quiet");
         Map<String, String> env = pb.environment();
         env.put("BW_CLIENTID", apiKey.getUsername());
         env.put("BW_CLIENTSECRET", apiKey.getPassword().getPlainText());
         executeCommand(pb);
-        LOGGER.info("BitwardenCLI: Login successful.");
+        LOGGER.info("Login successful.");
     }
 
     /**
@@ -70,13 +70,13 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void logout() throws InterruptedException {
-        LOGGER.info("BitwardenCLI: Starting logout.");
+        LOGGER.info("Starting logout.");
         ProcessBuilder pb = bitwardenCommand("logout");
         try {
             executeCommand(pb);
-            LOGGER.info("BitwardenCLI: Logout successful.");
+            LOGGER.info("Logout successful.");
         } catch (IOException e) {
-            LOGGER.warning("BitwardenCLI: Logout failed (likely already logged out). " + e.getMessage());
+            LOGGER.warning("Logout failed (likely already logged out). " + e.getMessage());
         }
     }
 
@@ -89,11 +89,11 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static Secret unlock(StringCredentials masterPassword) throws IOException, InterruptedException {
-        LOGGER.info("BitwardenCLI: Unlocking vault.");
+        LOGGER.info("Unlocking vault.");
         ProcessBuilder pb = bitwardenCommand("unlock", "--raw", "--passwordenv", "BITWARDEN_MASTER_PASSWORD");
         Map<String, String> env = pb.environment();
         env.put("BITWARDEN_MASTER_PASSWORD", masterPassword.getSecret().getPlainText());
-        LOGGER.info("BitwardenCLI: Vault unlocked successfully.");
+        LOGGER.info("Vault unlocked successfully.");
         return Secret.fromString(executeCommand(pb));
     }
 
@@ -104,11 +104,11 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void sync(Secret sessionToken) throws IOException, InterruptedException {
-        LOGGER.info("BitwardenCLI: Syncing vault.");
+        LOGGER.info("Syncing vault.");
         ProcessBuilder pb = bitwardenCommand("sync", "--quiet");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         executeCommand(pb);
-        LOGGER.info("BitwardenCLI: Vault sync complete.");
+        LOGGER.info("Vault sync complete.");
     }
 
     /**
@@ -120,12 +120,12 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static BitwardenStatus status(Secret sessionToken) throws IOException, InterruptedException {
-        LOGGER.info("BitwardenCLI: Fetching CLI status.");
+        LOGGER.info("Fetching CLI status.");
         ProcessBuilder pb = bitwardenCommand("status");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
-        LOGGER.info("BitwardenCLI: CLI Status fetched successfully.");
-        LOGGER.fine(() -> "BitwardenCLI: Status JSON: " + json);
+        LOGGER.info("CLI Status fetched successfully.");
+        LOGGER.fine(() -> "Status JSON: " + json);
         return OBJECT_MAPPER.readValue(json, BitwardenStatus.class);
     }
 
@@ -138,11 +138,11 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static List<BitwardenItem> listItems(Secret sessionToken) throws IOException, InterruptedException {
-        LOGGER.info("BitwardenCLI: Fetching vault items.");
+        LOGGER.info("Fetching vault items.");
         ProcessBuilder pb = bitwardenCommand("list", "items");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
-        LOGGER.info("BitwardenCLI: Vault items fetched successfully.");
+        LOGGER.info("Vault items fetched successfully.");
         return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
     }
 
@@ -154,9 +154,9 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void configServer(String serverUrl) throws IOException, InterruptedException {
-        LOGGER.info(() -> "BitwardenCLI: Configuring server URL: " + serverUrl);
+        LOGGER.info(() -> "Configuring server URL: " + serverUrl);
         executeCommand(bitwardenCommand("config", "server", serverUrl));
-        LOGGER.info("BitwardenCLI: Server URL configured successfully.");
+        LOGGER.info("Server URL configured successfully.");
     }
 
     /**
