@@ -44,7 +44,7 @@ public class SecureNoteConverter extends BitwardenItemConverter {
     @Override
     public StandardCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
         LOGGER.fine(() -> "convert: id=" + id + " item id=" + item.getId() + " name='" + item.getName() + "'");
-        if (item.getName().toLowerCase().endsWith(".env")) {
+        if (item.getName().trim().toLowerCase().endsWith(".env")) {
             LOGGER.fine(() -> "convert: treating as FileCredentialsImpl due to .env suffix");
             return new FileCredentialsImpl(
                     scope, id, description, item.getName(), SecretBytes.fromRawBytes(item.getNotes().getBytes(StandardCharsets.UTF_8)));
