@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 /**
@@ -26,6 +27,7 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
  */
 public final class BitwardenCLI {
 
+    private static final Logger LOGGER = Logger.getLogger(BitwardenCLI.class.getName());
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
@@ -40,6 +42,7 @@ public final class BitwardenCLI {
         List<String> commandParts = new ArrayList<>();
         commandParts.add(executablePath);
         commandParts.addAll(Arrays.asList(command));
+        LOGGER.fine(() -> "Building Bitwarden command: " + String.join(" ", commandParts));
         return new ProcessBuilder(commandParts);
     }
 
@@ -51,11 +54,13 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void login(StandardUsernamePasswordCredentials apiKey) throws IOException, InterruptedException {
+        LOGGER.info("BitwardenCLI: Logging in with API key credentials.");
         ProcessBuilder pb = bitwardenCommand("login", "--apikey", "--quiet");
         Map<String, String> env = pb.environment();
         env.put("BW_CLIENTID", apiKey.getUsername());
         env.put("BW_CLIENTSECRET", apiKey.getPassword().getPlainText());
         executeCommand(pb);
+        LOGGER.info("BitwardenCLI: Login successful.");
     }
 
     /**
@@ -65,11 +70,13 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void logout() throws InterruptedException {
+        LOGGER.info("BitwardenCLI: Starting logout.");
         ProcessBuilder pb = bitwardenCommand("logout");
         try {
             executeCommand(pb);
-        } catch (IOException ignored) {
-            // If logging out fails, we are likely already logged out. Safe to ignore.
+            LOGGER.info("BitwardenCLI: Logout successful.");
+        } catch (IOException e) {
+            LOGGER.warning("BitwardenCLI: Logout failed (likely already logged out). " + e.getMessage());
         }
     }
 
@@ -82,9 +89,11 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static Secret unlock(StringCredentials masterPassword) throws IOException, InterruptedException {
+        LOGGER.info("BitwardenCLI: Unlocking vault.");
         ProcessBuilder pb = bitwardenCommand("unlock", "--raw", "--passwordenv", "BITWARDEN_MASTER_PASSWORD");
         Map<String, String> env = pb.environment();
         env.put("BITWARDEN_MASTER_PASSWORD", masterPassword.getSecret().getPlainText());
+        LOGGER.info("BitwardenCLI: Vault unlocked successfully.");
         return Secret.fromString(executeCommand(pb));
     }
 
@@ -95,9 +104,11 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void sync(Secret sessionToken) throws IOException, InterruptedException {
+        LOGGER.info("BitwardenCLI: Syncing vault.");
         ProcessBuilder pb = bitwardenCommand("sync", "--quiet");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         executeCommand(pb);
+        LOGGER.info("BitwardenCLI: Vault sync complete.");
     }
 
     /**
@@ -109,9 +120,12 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static BitwardenStatus status(Secret sessionToken) throws IOException, InterruptedException {
+        LOGGER.info("BitwardenCLI: Fetching CLI status.");
         ProcessBuilder pb = bitwardenCommand("status");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
+        LOGGER.info("BitwardenCLI: CLI Status fetched successfully.");
+        LOGGER.fine(() -> "BitwardenCLI: Status JSON: " + json);
         return OBJECT_MAPPER.readValue(json, BitwardenStatus.class);
     }
 
@@ -124,9 +138,11 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static List<BitwardenItem> listItems(Secret sessionToken) throws IOException, InterruptedException {
+        LOGGER.info("BitwardenCLI: Fetching vault items.");
         ProcessBuilder pb = bitwardenCommand("list", "items");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
+        LOGGER.info("BitwardenCLI: Vault items fetched successfully.");
         return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
     }
 
@@ -138,7 +154,9 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void configServer(String serverUrl) throws IOException, InterruptedException {
+        LOGGER.info(() -> "BitwardenCLI: Configuring server URL: " + serverUrl);
         executeCommand(bitwardenCommand("config", "server", serverUrl));
+        LOGGER.info("BitwardenCLI: Server URL configured successfully.");
     }
 
     /**
@@ -150,6 +168,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the command is interrupted.
      */
     private static String executeCommand(ProcessBuilder pb) throws IOException, InterruptedException {
+        LOGGER.fine(() -> "Executing command: " + String.join(" ", pb.command()));
         pb.redirectErrorStream(true);
         Process process = pb.start();
         StringBuilder output = new StringBuilder();
@@ -162,7 +181,9 @@ public final class BitwardenCLI {
         }
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new IOException("Command failed with exit code " + exitCode + ". Output: " + output);
+            String errorMsg = "Command failed with exit code " + exitCode + ". Output: " + output;
+            LOGGER.severe(errorMsg);
+            throw new IOException(errorMsg);
         }
         return output.toString().trim();
     }
