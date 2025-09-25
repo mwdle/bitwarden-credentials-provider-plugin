@@ -100,7 +100,7 @@ You can fully configure this plugin's global settings via JCasC.
 ```yaml
 unclassified:
   bitwardenGlobalConfig:
-    serverUrl: "[https://vaultwarden.example.com](https://vaultwarden.example.com)"
+    serverUrl: "https://vault.example.com"
     apiCredentialId: "bitwarden-api-key"
     masterPasswordCredentialId: "bitwarden-master-password"
 ```
