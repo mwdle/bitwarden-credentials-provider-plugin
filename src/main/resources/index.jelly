@@ -1,4 +1,4 @@
 <?jelly escape-by-default='true'?>
 <div>
-    A Jenkins credentials provider for Bitwarden, allowing pipelines to fetch secrets and use them as native Jenkins credentials.
+    Allows pipelines to fetch secrets from a Bitwarden or Vaultwarden vault and use them as native Jenkins credentials.
 </div>
