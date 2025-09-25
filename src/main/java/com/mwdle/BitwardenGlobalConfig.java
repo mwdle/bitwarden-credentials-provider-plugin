@@ -1,11 +1,11 @@
 package com.mwdle;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import hudson.Extension;
+import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import java.util.Collections;
 import jenkins.model.GlobalConfiguration;
@@ -15,7 +15,6 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * Manages the system-wide configuration for the Bitwarden Credentials Provider plugin.
@@ -95,15 +94,14 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     @POST
     public ListBoxModel doFillApiCredentialIdItems(
             @AncestorInPath Jenkins context, @QueryParameter String apiCredentialId) {
-        context.checkPermission(CredentialsProvider.VIEW);
+        context.checkPermission(Jenkins.ADMINISTER);
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
-                        SecurityContextHolder.getContext().getAuthentication(),
-                        context,
+                        ACL.SYSTEM2,
+                        context.getItemGroup(),
                         StandardUsernamePasswordCredentials.class,
                         Collections.emptyList(),
-                        // Filter to show only credentials stored in the global and system scope.
                         CredentialsMatchers.anyOf(
                                 CredentialsMatchers.withScope(CredentialsScope.SYSTEM),
                                 CredentialsMatchers.withScope(CredentialsScope.GLOBAL)))
@@ -120,15 +118,14 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     @POST
     public ListBoxModel doFillMasterPasswordCredentialIdItems(
             @AncestorInPath Jenkins context, @QueryParameter String masterPasswordCredentialId) {
-        context.checkPermission(CredentialsProvider.VIEW);
+        context.checkPermission(Jenkins.ADMINISTER);
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
-                        SecurityContextHolder.getContext().getAuthentication(),
-                        context,
+                        ACL.SYSTEM2,
+                        context.getItemGroup(),
                         StringCredentials.class,
                         Collections.emptyList(),
-                        // Filter to show only credentials stored in the global and system scope.
                         CredentialsMatchers.anyOf(
                                 CredentialsMatchers.withScope(CredentialsScope.SYSTEM),
                                 CredentialsMatchers.withScope(CredentialsScope.GLOBAL)))
