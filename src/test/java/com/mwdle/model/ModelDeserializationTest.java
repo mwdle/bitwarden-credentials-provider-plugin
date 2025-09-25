@@ -1,10 +1,10 @@
 package com.mwdle.model;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the data model classes.
@@ -22,7 +22,8 @@ class ModelDeserializationTest {
 
     @Test
     void testDeserializeLoginItem() throws Exception {
-        String loginJson = """
+        String loginJson =
+                """
                 {
                     "id": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
                     "name": "My Jenkins API Key",
@@ -55,7 +56,8 @@ class ModelDeserializationTest {
 
     @Test
     void testDeserializeSshKeyItem() throws Exception {
-        String sshKeyJson = """
+        String sshKeyJson =
+                """
                 {
                     "id": "f0e9d8c7-b6a5-4f3e-2d1c-0b9a8f7e6d5c",
                     "name": "GitHub Deploy Key",
@@ -76,7 +78,9 @@ class ModelDeserializationTest {
 
         assertNotNull(item.getSshKey());
         assertNotNull(item.getSshKey().getPrivateKey());
-        assertEquals("-----BEGIN RSA PRIVATE KEY-----\nSUPER_DUPER_SECRET_PRIVATE_KEY\n-----END RSA PRIVATE KEY-----", item.getSshKey().getPrivateKey().getPlainText());
+        assertEquals(
+                "-----BEGIN RSA PRIVATE KEY-----\nSUPER_DUPER_SECRET_PRIVATE_KEY\n-----END RSA PRIVATE KEY-----",
+                item.getSshKey().getPrivateKey().getPlainText());
         assertEquals("ssh-rsa AAAAB3NzaC1yc2EAAA...", item.getSshKey().getPublicKey());
 
         assertNull(item.getNotes());
@@ -85,7 +89,8 @@ class ModelDeserializationTest {
 
     @Test
     void testDeserializeSecureNoteItem() throws Exception {
-        String secureNoteJson = """
+        String secureNoteJson =
+                """
                 {
                     "id": "11223344-5566-7788-9900-aabbccddeeff",
                     "name": "My Secure Note",
@@ -109,7 +114,8 @@ class ModelDeserializationTest {
 
     @Test
     void testDeserializeStatus() throws Exception {
-        String statusJson = """
+        String statusJson =
+                """
                 {
                     "serverUrl": "https://vault.bitwarden.com",
                     "lastSync": "2025-09-25T23:05:00.000Z",
@@ -127,7 +133,8 @@ class ModelDeserializationTest {
 
     @Test
     void testHandlesUnknownFieldsGracefully() {
-        String futureJson = """
+        String futureJson =
+                """
                 {
                     "id": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
                     "name": "My Jenkins API Key",

@@ -3,6 +3,8 @@ package com.mwdle.bitwarden;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -23,8 +25,42 @@ public final class BitwardenExecutableManager {
     public static final BitwardenExecutableManager INSTANCE = new BitwardenExecutableManager();
     private final String executablePath;
 
+    /**
+     * Constructs the singleton BitwardenExecutableManager.
+     * Detects the OS, determines the target path, and downloads the executable if it doesn't exist.
+     */
     private BitwardenExecutableManager() {
-        this.executablePath = initializeExecutable();
+        LOGGER.fine("Starting executable initialization.");
+        String os = System.getProperty("os.name").toLowerCase();
+        LOGGER.fine(() -> "Detected OS: " + os);
+        String downloadUrl;
+        String executableName;
+
+        if (os.contains("win")) {
+            downloadUrl = "https://bitwarden.com/download/?app=cli&platform=windows";
+            executableName = "bw.exe";
+        } else if (os.contains("mac")) {
+            downloadUrl = "https://bitwarden.com/download/?app=cli&platform=macos";
+            executableName = "bw";
+        } else {
+            downloadUrl = "https://bitwarden.com/download/?app=cli&platform=linux";
+            executableName = "bw";
+        }
+
+        File pluginBinDir = getPluginBinDirectory();
+        File executableFile = new File(pluginBinDir, executableName);
+
+        if (!executableFile.exists()) {
+            LOGGER.info("Bitwarden CLI not found. Downloading...");
+            try {
+                downloadAndExtract(new URI(downloadUrl).toURL(), executableFile);
+            } catch (IOException | URISyntaxException e) {
+                LOGGER.log(Level.SEVERE, "Failed to initialize Bitwarden executable", e);
+                throw new RuntimeException("Failed to initialize Bitwarden executable", e);
+            }
+        }
+
+        this.executablePath = executableFile.getAbsolutePath();
     }
 
     /**
@@ -41,46 +77,6 @@ public final class BitwardenExecutableManager {
     }
 
     /**
-     * The core logic to detect the OS, determine the target path, and download the executable if it doesn't exist.
-     *
-     * @return The path to the executable, or null if initialization fails.
-     */
-    private String initializeExecutable() {
-        LOGGER.fine("Starting executable initialization.");
-        try {
-            String os = System.getProperty("os.name").toLowerCase();
-            LOGGER.fine(() -> "Detected OS: " + os);
-            String downloadUrl;
-            String executableName;
-
-            if (os.contains("win")) {
-                downloadUrl = "https://bitwarden.com/download/?app=cli&platform=windows";
-                executableName = "bw.exe";
-            } else if (os.contains("mac")) {
-                downloadUrl = "https://bitwarden.com/download/?app=cli&platform=macos";
-                executableName = "bw";
-            } else {
-                downloadUrl = "https://bitwarden.com/download/?app=cli&platform=linux";
-                executableName = "bw";
-            }
-
-            File pluginBinDir = getPluginBinDirectory();
-            File executableFile = new File(pluginBinDir, executableName);
-
-            if (!executableFile.exists()) {
-                LOGGER.info("Bitwarden CLI not found. Downloading...");
-                downloadAndExtract(new URL(downloadUrl), executableFile);
-            }
-
-            return executableFile.getAbsolutePath();
-
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to initialize Bitwarden executable", e);
-            return null;
-        }
-    }
-
-    /**
      * Downloads the zip archive, extracts the executable, and sets the necessary execute permissions.
      * @param downloadUrl the URL of the zip archive to download
      * @param targetFile the destination file for the extracted executable
@@ -88,14 +84,14 @@ public final class BitwardenExecutableManager {
      */
     private void downloadAndExtract(URL downloadUrl, File targetFile) throws IOException {
         LOGGER.fine(() -> "Downloading Bitwarden CLI from URL: " + downloadUrl);
-        File tempZip = File.createTempFile("bw-cli", ".zip");
+        File bwCliZip = File.createTempFile("bw-cli", ".zip");
         try {
             try (InputStream in = downloadUrl.openStream()) {
-                Files.copy(in, tempZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                LOGGER.fine("Downloaded zip to: " + tempZip.getAbsolutePath());
+                Files.copy(in, bwCliZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                LOGGER.fine("Downloaded zip to: " + bwCliZip.getAbsolutePath());
             }
 
-            try (ZipFile zipFile = new ZipFile(tempZip)) {
+            try (ZipFile zipFile = new ZipFile(bwCliZip)) {
                 Enumeration<? extends ZipEntry> entries = zipFile.entries();
                 boolean foundExecutable = false;
                 while (entries.hasMoreElements()) {
@@ -115,8 +111,8 @@ public final class BitwardenExecutableManager {
                 }
             }
         } finally {
-            if (!tempZip.delete()) {
-                LOGGER.warning("Could not delete temporary zip file: " + tempZip.getAbsolutePath());
+            if (!bwCliZip.delete()) {
+                LOGGER.warning("Could not delete temporary zip file: " + bwCliZip.getAbsolutePath());
             }
         }
 
