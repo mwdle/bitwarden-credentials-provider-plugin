@@ -47,7 +47,7 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             BitwardenItemConverter converter = BitwardenItemConverter.findConverter(item);
             if (converter != null) {
                 String description = String.format("Bitwarden: %s (ID: %s)", item.getName(), item.getId());
-                // Create the credential twice, to allow fetching it both by id OR name.
+                // Create the credential twice, to allow fetching it both by id OR name
                 @SuppressWarnings("unchecked") C credByName = (C) converter.convert(CredentialsScope.GLOBAL, item.getName(), description, item);
                 result.add(credByName);
                 @SuppressWarnings("unchecked") C credById = (C) converter.convert(CredentialsScope.GLOBAL, item.getId(), description, item);
