@@ -51,8 +51,6 @@ rm bw.zip bw
 
 You must first configure the plugin's global settings in **Manage Jenkins > Configure System**.
 
-![Jenkins Global Configuration UI](https://placehold.co/800x300/f0f0f0/333?text=Jenkins+Global+Configuration+UI)
-
 -   **Bitwarden Server URL:** For self-hosted instances like Vaultwarden. Leave blank for the official Bitwarden cloud.
 -   **Bitwarden API Key Credential:** Select a Jenkins "Username with password" credential that stores your Bitwarden service account's Client ID and Client Secret.
 -   **Bitwarden Master Password Credential:** Select a Jenkins "Secret text" credential that stores your service account's Master Password.
