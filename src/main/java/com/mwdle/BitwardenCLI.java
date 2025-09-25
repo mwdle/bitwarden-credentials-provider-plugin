@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mwdle.model.BitwardenItem;
 import com.mwdle.model.BitwardenStatus;
+import hudson.util.Secret;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
 import java.io.BufferedReader;
@@ -63,11 +64,11 @@ public final class BitwardenCLI {
      * @throws IOException          If the CLI command fails.
      * @throws InterruptedException If the CLI command is interrupted.
      */
-    public static String unlock(StringCredentials masterPassword) throws IOException, InterruptedException {
+    public static Secret unlock(StringCredentials masterPassword) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("bw", "unlock", "--raw", "--passwordenv", "BITWARDEN_MASTER_PASSWORD");
         Map<String, String> env = pb.environment();
         env.put("BITWARDEN_MASTER_PASSWORD", masterPassword.getSecret().getPlainText());
-        return executeCommand(pb);
+        return Secret.fromString(executeCommand(pb));
     }
 
     /**
@@ -76,9 +77,9 @@ public final class BitwardenCLI {
      * @throws IOException          If the CLI command fails.
      * @throws InterruptedException If the CLI command is interrupted.
      */
-    public static void sync(String sessionToken) throws IOException, InterruptedException {
+    public static void sync(Secret sessionToken) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("bw", "sync", "--quiet");
-        pb.environment().put("BW_SESSION", sessionToken);
+        pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         executeCommand(pb);
     }
 
@@ -90,9 +91,9 @@ public final class BitwardenCLI {
      * @throws IOException          If the CLI command fails or JSON parsing fails.
      * @throws InterruptedException If the CLI command is interrupted.
      */
-    public static BitwardenStatus status(String sessionToken) throws IOException, InterruptedException {
+    public static BitwardenStatus status(Secret sessionToken) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("bw", "status");
-        pb.environment().put("BW_SESSION", sessionToken);
+        pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
         return OBJECT_MAPPER.readValue(json, BitwardenStatus.class);
     }
@@ -105,9 +106,9 @@ public final class BitwardenCLI {
      * @throws IOException          If the CLI command fails or JSON parsing fails.
      * @throws InterruptedException If the CLI command is interrupted.
      */
-    public static List<BitwardenItem> listItems(String sessionToken) throws IOException, InterruptedException {
+    public static List<BitwardenItem> listItems(Secret sessionToken) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("bw", "list", "items");
-        pb.environment().put("BW_SESSION", sessionToken);
+        pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
         return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
     }

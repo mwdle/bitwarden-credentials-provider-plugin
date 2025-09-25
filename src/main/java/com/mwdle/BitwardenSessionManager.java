@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.mwdle.model.BitwardenStatus;
 import hudson.Extension;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 
@@ -32,7 +33,7 @@ public class BitwardenSessionManager {
      * builds to prevent API rate-limiting and improve secret fetching performance. It is refreshed by
      * {@link #getNewSessionToken(StandardUsernamePasswordCredentials, StringCredentials, String)} when it becomes invalid.
      */
-    private String sessionToken;
+    private Secret sessionToken;
 
 
     /**
@@ -54,7 +55,7 @@ public class BitwardenSessionManager {
      * @throws IOException          If the login/unlock process fails.
      * @throws InterruptedException If the CLI command is interrupted.
      */
-    public String getSessionToken() throws IOException, InterruptedException {
+    public Secret getSessionToken() throws IOException, InterruptedException {
         if (isTokenValid()) {
             return sessionToken;
         }
@@ -75,8 +76,7 @@ public class BitwardenSessionManager {
                 throw new IOException("Could not find API Key or Master Password credentials configured for the Bitwarden plugin.");
             }
 
-            this.sessionToken = getNewSessionToken(apiKey, masterPassword, config.getServerUrl());
-            return this.sessionToken;
+            return this.sessionToken = getNewSessionToken(apiKey, masterPassword, config.getServerUrl());
         } finally {
             lock.unlock();
         }
@@ -104,7 +104,7 @@ public class BitwardenSessionManager {
      * Performs the full authentication sequence by orchestrating calls to the
      * {@link BitwardenCLI} utility, and returns a new session token.
      */
-    private String getNewSessionToken(StandardUsernamePasswordCredentials apiKey, StringCredentials masterPassword, String serverUrl) throws IOException, InterruptedException {
+    private Secret getNewSessionToken(StandardUsernamePasswordCredentials apiKey, StringCredentials masterPassword, String serverUrl) throws IOException, InterruptedException {
         BitwardenCLI.logout();
         if (serverUrl != null && !serverUrl.isEmpty()) {
             BitwardenCLI.configServer(serverUrl);
