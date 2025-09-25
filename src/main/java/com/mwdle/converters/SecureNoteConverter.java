@@ -6,6 +6,7 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.mwdle.model.BitwardenItem;
 import hudson.Extension;
 import hudson.util.Secret;
+import java.util.logging.Logger;
 import org.jenkinsci.plugins.plaincredentials.impl.FileCredentialsImpl;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
 
@@ -16,6 +17,9 @@ import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
  */
 @Extension
 public class SecureNoteConverter extends BitwardenItemConverter {
+
+    private static final Logger LOGGER = Logger.getLogger(SecureNoteConverter.class.getName());
+
     /**
      * {@inheritDoc}
      * <p>
@@ -23,7 +27,10 @@ public class SecureNoteConverter extends BitwardenItemConverter {
      */
     @Override
     public boolean canConvert(BitwardenItem item) {
-        return item.getNotes() != null;
+        boolean canConvert = item.getNotes() != null;
+        LOGGER.fine(() ->
+                "canConvert: item id=" + item.getId() + " name='" + item.getName() + "' canConvert=" + canConvert);
+        return canConvert;
     }
 
     /**
@@ -34,10 +41,13 @@ public class SecureNoteConverter extends BitwardenItemConverter {
      */
     @Override
     public StandardCredentials convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
+        LOGGER.fine(() -> "convert: id=" + id + " item id=" + item.getId() + " name='" + item.getName() + "'");
         if (item.getName().toLowerCase().endsWith(".env")) {
+            LOGGER.fine(() -> "convert: treating as FileCredentialsImpl due to .env suffix");
             return new FileCredentialsImpl(
                     scope, id, description, item.getName(), SecretBytes.fromString(item.getNotes()));
         } else {
+            LOGGER.fine(() -> "convert: treating as StringCredentialsImpl");
             return new StringCredentialsImpl(scope, id, description, Secret.fromString(item.getNotes()));
         }
     }

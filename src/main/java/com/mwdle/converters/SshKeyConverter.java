@@ -5,25 +5,26 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.mwdle.model.BitwardenItem;
 import com.mwdle.model.BitwardenSshKey;
 import hudson.Extension;
+import java.util.logging.Logger;
 
+/**
+ * Converts a Bitwarden 'SSH Key' item into a Jenkins {@link BasicSSHUserPrivateKey} credential.
+ * <p>
+ * Extracts the private key and optionally derives the username from the public key comment.
+ */
 @Extension
 public class SshKeyConverter extends BitwardenItemConverter {
-    @Override
-    public boolean canConvert(BitwardenItem item) {
-        BitwardenSshKey sshKeyData = item.getSshKey();
-        return sshKeyData != null && sshKeyData.getPrivateKey() != null && sshKeyData.getPublicKey() != null;
-    }
 
-    @Override
-    public BasicSSHUserPrivateKey convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
-        BitwardenSshKey sshKeyData = item.getSshKey();
-        String username = getUsername(sshKeyData);
-        BasicSSHUserPrivateKey.DirectEntryPrivateKeySource privateKeySource =
-                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(sshKeyData.getPrivateKey());
+    private static final Logger LOGGER = Logger.getLogger(SshKeyConverter.class.getName());
 
-        return new BasicSSHUserPrivateKey(scope, id, username, privateKeySource, "", description);
-    }
-
+    /**
+     * Derives the username from the public key comment if available.
+     * <p>
+     * If the public key comment contains a string in the form "user@host", the username will be the part before the '@'.
+     *
+     * @param sshKeyData the SSH key data from the Bitwarden item.
+     * @return the derived username, or an empty string if not derivable.
+     */
     private static String getUsername(BitwardenSshKey sshKeyData) {
         String username = "";
         String publicKey = sshKeyData.getPublicKey();
@@ -36,5 +37,36 @@ public class SshKeyConverter extends BitwardenItemConverter {
             }
         }
         return username;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation returns true if the Bitwarden item contains a non-null {@code privateKey} field.
+     */
+    @Override
+    public boolean canConvert(BitwardenItem item) {
+        BitwardenSshKey sshKeyData = item.getSshKey();
+        boolean canConvert = sshKeyData != null && sshKeyData.getPrivateKey() != null;
+        LOGGER.fine(() ->
+                "canConvert: item id=" + item.getId() + " name='" + item.getName() + "' canConvert=" + canConvert);
+        return canConvert;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation returns a {@link BasicSSHUserPrivateKey}, deriving the username from the public key comment if available.
+     */
+    @Override
+    public BasicSSHUserPrivateKey convert(CredentialsScope scope, String id, String description, BitwardenItem item) {
+        LOGGER.fine(() -> "convert: id=" + id + " item id=" + item.getId() + " name='" + item.getName() + "'");
+        BitwardenSshKey sshKeyData = item.getSshKey();
+        String username = getUsername(sshKeyData);
+        LOGGER.fine(() -> "convert: derived username='" + username + "'");
+        BasicSSHUserPrivateKey.DirectEntryPrivateKeySource privateKeySource =
+                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(sshKeyData.getPrivateKey());
+
+        return new BasicSSHUserPrivateKey(scope, id, username, privateKeySource, "", description);
     }
 }
