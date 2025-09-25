@@ -70,7 +70,7 @@ public final class BitwardenCLI {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public static void logout() throws InterruptedException {
-        LOGGER.info("Starting logout.");
+        LOGGER.info("Logging out...");
         ProcessBuilder pb = bitwardenCommand("logout");
         try {
             executeCommand(pb);

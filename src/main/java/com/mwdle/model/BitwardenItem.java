@@ -1,6 +1,8 @@
 package com.mwdle.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import hudson.util.Secret;
 
 /**
  * Represents a top-level Bitwarden item object, deserialized from the JSON output of the {@code bw} CLI.
@@ -23,7 +25,8 @@ public class BitwardenItem {
     /**
      * The content of the item's "notes" field.
      */
-    private String notes;
+    @JsonDeserialize(using = SecretDeserializer.class)
+    private Secret notes;
     /**
      * The nested object containing login details, if this item is a Login.
      */
@@ -50,7 +53,7 @@ public class BitwardenItem {
     /**
      * @return The content of the item's "notes" field.
      */
-    public String getNotes() {
+    public Secret getNotes() {
         return notes;
     }
 

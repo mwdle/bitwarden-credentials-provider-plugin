@@ -1,7 +1,9 @@
 package com.mwdle.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.util.Secret;
 
 /**
  * Represents the nested 'sshKey' object within a Bitwarden item JSON.
@@ -13,7 +15,8 @@ public class BitwardenSshKey {
     /**
      * The private key text.
      */
-    private String privateKey;
+    @JsonDeserialize(using = SecretDeserializer.class)
+    private Secret privateKey;
     /**
      * The public key text, which may include a comment.
      */
@@ -22,7 +25,7 @@ public class BitwardenSshKey {
     /**
      * @return The private key text.
      */
-    public String getPrivateKey() {
+    public Secret getPrivateKey() {
         return privateKey;
     }
 

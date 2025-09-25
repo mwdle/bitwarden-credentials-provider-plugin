@@ -8,6 +8,7 @@ import hudson.Extension;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import java.util.Collections;
+import java.util.logging.Logger;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
@@ -15,7 +16,6 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
-import java.util.logging.Logger;
 
 /**
  * Manages the system-wide configuration for the Bitwarden Credentials Provider plugin.

@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.springframework.security.core.Authentication;
 import java.util.logging.Logger;
+import org.springframework.security.core.Authentication;
 
 /**
  * This provider is responsible for resolving Bitwarden credentials into real, usable Jenkins credentials.
@@ -60,7 +60,6 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
                 + " itemGroup=" + (itemGroup != null ? itemGroup.getFullName() : "null")
                 + " authentication=" + (authentication != null ? authentication.getName() : "null"));
 
-
         if (itemGroup == null || authentication == null) {
             LOGGER.fine("getCredentialsInItemGroup: itemGroup or authentication is null — returning empty list");
             return Collections.emptyList();
@@ -91,8 +90,8 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
                 if (type.isInstance(credential)) result.add(type.cast(credential));
                 credential = converter.convert(CredentialsScope.GLOBAL, item.getId(), description, item);
                 if (type.isInstance(credential)) result.add(type.cast(credential));
-            }
-            else LOGGER.fine(() -> "No converter found for item: id=" + item.getId() + " name='" + item.getName() + "'");
+            } else
+                LOGGER.fine(() -> "No converter found for item: id=" + item.getId() + " name='" + item.getName() + "'");
         });
 
         LOGGER.fine(() -> "Returning " + result.size() + " credentials");
