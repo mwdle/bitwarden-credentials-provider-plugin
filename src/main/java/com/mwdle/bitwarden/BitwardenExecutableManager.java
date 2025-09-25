@@ -135,7 +135,9 @@ public final class BitwardenExecutableManager {
         File binDir = new File(pluginDir, "bin");
         if (!binDir.exists()) {
             if (!binDir.mkdirs()) {
-                LOGGER.warning("Could not create plugin bin directory: " + binDir.getAbsolutePath());
+                String errorMessage = "Could not create plugin bin directory: " + binDir.getAbsolutePath() + "\nDoes Jenkins have proper file permissions?";
+                LOGGER.severe(errorMessage);
+                throw new RuntimeException(errorMessage);
             } else {
                 LOGGER.fine("Created plugin bin directory: " + binDir.getAbsolutePath());
             }
