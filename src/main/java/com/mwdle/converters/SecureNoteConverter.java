@@ -6,6 +6,8 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.mwdle.model.BitwardenItem;
 import hudson.Extension;
 import hudson.util.Secret;
+
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 import org.jenkinsci.plugins.plaincredentials.impl.FileCredentialsImpl;
 import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl;
@@ -45,7 +47,7 @@ public class SecureNoteConverter extends BitwardenItemConverter {
         if (item.getName().toLowerCase().endsWith(".env")) {
             LOGGER.fine(() -> "convert: treating as FileCredentialsImpl due to .env suffix");
             return new FileCredentialsImpl(
-                    scope, id, description, item.getName(), SecretBytes.fromString(item.getNotes()));
+                    scope, id, description, item.getName(), SecretBytes.fromRawBytes(item.getNotes().getBytes(StandardCharsets.UTF_8)));
         } else {
             LOGGER.fine(() -> "convert: treating as StringCredentialsImpl");
             return new StringCredentialsImpl(scope, id, description, Secret.fromString(item.getNotes()));
