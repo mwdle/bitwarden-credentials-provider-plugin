@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.concurrent.locks.ReentrantLock;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+import java.util.logging.Logger;
 
 /**
  * A thread-safe singleton that manages and caches a single, global Bitwarden session token.
@@ -21,6 +22,8 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
  */
 @Extension
 public class BitwardenSessionManager {
+
+    private static final Logger LOGGER = Logger.getLogger(BitwardenSessionManager.class.getName());
 
     /**
      * A lock to ensure that the session token refresh process is thread-safe. This prevents
@@ -55,17 +58,24 @@ public class BitwardenSessionManager {
      * @throws InterruptedException If the CLI command is interrupted.
      */
     public Secret getSessionToken() throws IOException, InterruptedException {
+        LOGGER.fine("Checking if cached Bitwarden session token is valid.");
         if (isTokenValid()) {
+            LOGGER.fine("Cached Bitwarden session token is valid. Returning cached token.");
             return sessionToken;
         }
 
+        LOGGER.fine("Token invalid or missing. Attempting to acquire lock to refresh token.");
         lock.lock();
         try {
+            LOGGER.fine("Lock acquired.");
+
             // Double-check if another thread renewed the token while we were waiting for the lock.
             if (isTokenValid()) {
+                LOGGER.fine("Another thread refreshed the token while waiting for lock. Returning refreshed token.");
                 return sessionToken;
             }
 
+            LOGGER.info("Refreshing Bitwarden session token.");
             // If we are the thread responsible for refreshing, perform the full login.
             BitwardenGlobalConfig config = BitwardenGlobalConfig.get();
             StandardUsernamePasswordCredentials apiKey =
@@ -95,13 +105,16 @@ public class BitwardenSessionManager {
                     .orElse(null);
 
             if (apiKey == null || masterPassword == null) {
+                LOGGER.severe("API Key or Master Password credentials not found. Cannot refresh Bitwarden session token.");
                 throw new IOException(
                         "Could not find API Key or Master Password credentials configured for the Bitwarden plugin.");
             }
 
+            LOGGER.info("Found credentials. Getting new Bitwarden session token.");
             return this.sessionToken = getNewSessionToken(apiKey, masterPassword, config.getServerUrl());
         } finally {
             lock.unlock();
+            LOGGER.fine("Lock released.");
         }
     }
 
@@ -112,6 +125,7 @@ public class BitwardenSessionManager {
      */
     private boolean isTokenValid() {
         if (this.sessionToken == null) {
+            LOGGER.fine("Session token is null — not valid.");
             return false;
         }
         try {
@@ -119,6 +133,7 @@ public class BitwardenSessionManager {
             return response.getStatus().equals("unlocked");
         } catch (Exception e) {
             // If the status command fails for any reason the token is considered invalid
+            LOGGER.warning("Failed to check Bitwarden session token status: " + e.getMessage());
             return false;
         }
     }
@@ -132,12 +147,14 @@ public class BitwardenSessionManager {
             throws IOException, InterruptedException {
         BitwardenCLI.logout();
         if (serverUrl == null || serverUrl.isEmpty()) {
+            LOGGER.fine("Server URL not set. Using default: " + serverUrl);
             serverUrl = "https://vault.bitwarden.com";
         }
         BitwardenCLI.configServer(serverUrl);
         try {
             BitwardenCLI.login(apiKey);
         } catch (IOException e) {
+            LOGGER.severe("Bitwarden login failed: " + e.getMessage());
             throw new BitwardenAuthenticationException(
                     "Bitwarden login failed. Please check the API Key (Client ID/Secret) and server URL in the global configuration.",
                     e);
@@ -145,6 +162,7 @@ public class BitwardenSessionManager {
         try {
             return BitwardenCLI.unlock(masterPassword);
         } catch (IOException e) {
+            LOGGER.severe("Bitwarden unlock failed: " + e.getMessage());
             throw new BitwardenAuthenticationException(
                     "Bitwarden unlock failed. Please check the Master Password credential.", e);
         }
