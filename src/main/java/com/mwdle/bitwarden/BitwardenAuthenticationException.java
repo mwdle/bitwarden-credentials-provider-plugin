@@ -1,4 +1,4 @@
-package com.mwdle;
+package com.mwdle.bitwarden;
 
 import java.io.IOException;
 

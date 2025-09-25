@@ -2,7 +2,6 @@ package com.mwdle.bitwarden;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.mwdle.BitwardenAuthenticationException;
 import com.mwdle.BitwardenCredentialsProvider;
 import com.mwdle.BitwardenGlobalConfig;
 import com.mwdle.model.BitwardenStatus;

@@ -4,6 +4,7 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.mwdle.bitwarden.BitwardenAuthenticationException;
 import com.mwdle.bitwarden.BitwardenCLI;
 import com.mwdle.bitwarden.BitwardenSessionManager;
 import com.mwdle.converters.BitwardenItemConverter;
