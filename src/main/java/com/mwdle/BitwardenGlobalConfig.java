@@ -15,6 +15,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
+import java.util.logging.Logger;
 
 /**
  * Manages the system-wide configuration for the Bitwarden Credentials Provider plugin.
@@ -24,6 +25,8 @@ import org.kohsuke.stapler.verb.POST;
  */
 @Extension
 public class BitwardenGlobalConfig extends GlobalConfiguration {
+
+    private static final Logger LOGGER = Logger.getLogger(BitwardenGlobalConfig.class.getName());
 
     /** The URL of the self-hosted Bitwarden/Vaultwarden server. */
     private String serverUrl;
@@ -38,6 +41,9 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
      */
     public BitwardenGlobalConfig() {
         load();
+        LOGGER.fine("BitwardenGlobalConfig loaded: serverUrl=" + serverUrl
+                + ", apiCredentialId=" + apiCredentialId
+                + ", masterPasswordCredentialId=" + masterPasswordCredentialId);
     }
 
     /**
@@ -67,18 +73,21 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
         save();
+        LOGGER.fine("setServerUrl: " + serverUrl);
     }
 
     @DataBoundSetter
     public void setApiCredentialId(String apiCredentialId) {
         this.apiCredentialId = apiCredentialId;
         save();
+        LOGGER.fine("setApiCredentialId: " + apiCredentialId);
     }
 
     @DataBoundSetter
     public void setMasterPasswordCredentialId(String masterPasswordCredentialId) {
         this.masterPasswordCredentialId = masterPasswordCredentialId;
         save();
+        LOGGER.fine("setMasterPasswordCredentialId: " + masterPasswordCredentialId);
     }
 
     /**
@@ -95,6 +104,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     public ListBoxModel doFillApiCredentialIdItems(
             @AncestorInPath Jenkins context, @QueryParameter String apiCredentialId) {
         context.checkPermission(Jenkins.ADMINISTER);
+        LOGGER.fine("doFillApiCredentialIdItems: currentValue=" + apiCredentialId);
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
@@ -119,6 +129,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     public ListBoxModel doFillMasterPasswordCredentialIdItems(
             @AncestorInPath Jenkins context, @QueryParameter String masterPasswordCredentialId) {
         context.checkPermission(Jenkins.ADMINISTER);
+        LOGGER.fine("doFillMasterPasswordCredentialIdItems: currentValue=" + masterPasswordCredentialId);
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
