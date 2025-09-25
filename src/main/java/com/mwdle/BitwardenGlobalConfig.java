@@ -1,6 +1,7 @@
 package com.mwdle;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -94,8 +95,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     @POST
     public ListBoxModel doFillApiCredentialIdItems(
             @AncestorInPath Jenkins context, @QueryParameter String apiCredentialId) {
-        // Only administrators should be able to see this list of credentials.
-        context.checkPermission(Jenkins.ADMINISTER);
+        context.checkPermission(CredentialsProvider.VIEW);
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
@@ -120,8 +120,7 @@ public class BitwardenGlobalConfig extends GlobalConfiguration {
     @POST
     public ListBoxModel doFillMasterPasswordCredentialIdItems(
             @AncestorInPath Jenkins context, @QueryParameter String masterPasswordCredentialId) {
-        // Only administrators should be able to see this list of credentials.
-        context.checkPermission(Jenkins.ADMINISTER);
+        context.checkPermission(CredentialsProvider.VIEW);
         return new StandardListBoxModel()
                 .includeEmptyValue()
                 .includeMatchingAs(
