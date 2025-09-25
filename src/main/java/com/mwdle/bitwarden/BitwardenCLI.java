@@ -1,4 +1,4 @@
-package com.mwdle.cli;
+package com.mwdle.bitwarden;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.fasterxml.jackson.core.type.TypeReference;

@@ -1,17 +1,19 @@
-package com.mwdle;
+package com.mwdle.bitwarden;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.mwdle.cli.BitwardenCLI;
+import com.mwdle.BitwardenAuthenticationException;
+import com.mwdle.BitwardenCredentialsProvider;
+import com.mwdle.BitwardenGlobalConfig;
 import com.mwdle.model.BitwardenStatus;
 import hudson.Extension;
 import hudson.util.Secret;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
-import java.util.logging.Logger;
 
 /**
  * A thread-safe singleton that manages and caches a single, global Bitwarden session token.
@@ -105,7 +107,8 @@ public class BitwardenSessionManager {
                     .orElse(null);
 
             if (apiKey == null || masterPassword == null) {
-                LOGGER.severe("API Key or Master Password credentials not found. Cannot refresh Bitwarden session token.");
+                LOGGER.severe(
+                        "API Key or Master Password credentials not found. Cannot refresh Bitwarden session token.");
                 throw new IOException(
                         "Could not find API Key or Master Password credentials configured for the Bitwarden plugin.");
             }
