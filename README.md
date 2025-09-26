@@ -1,7 +1,7 @@
 # Bitwarden Credentials Provider Plugin
 
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/bitwarden-credentials-provider.svg)](https://plugins.jenkins.io/bitwarden-credentials-provider)
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/bitwarden-credentials-provider-plugin.svg?label=release)](https://github.com/jenkinsci/bitwarden-credentials-provider-plugin/releases/latest)
+[![GitHub release](https://img.shields.io/github/release/mwdle/bitwarden-credentials-provider-plugin.svg?label=release)](https://github.com/mwdle/bitwarden-credentials-provider-plugin/releases/latest)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/bitwarden-credentials-provider.svg?color=blue)](https://plugins.jenkins.io/bitwarden-credentials-provider)
 
 The **Bitwarden Credentials Provider** is a [Jenkins](https://jenkins.io) plugin that dynamically exposes every item in your [Bitwarden](https://bitwarden.com/) vault as a native Jenkins credential. It allows pipeline authors to access any secret on the fly by its name or ID, without requiring an administrator to pre-configure mappings in the Jenkins UI.
@@ -29,7 +29,8 @@ On every credential request, the plugin:
 3.  Fetches the *entire list* of items from the vault.
 4.  Dynamically converts each Bitwarden item into a native Jenkins credential, making it available to your jobs.
 
-**Note** This credential provider plugin does *not* support providing Bitwarden credentials within the Jenkins UI for configuring other plugins, it only supports providing credentials from Bitwarden within pipelines or groovy scripts.
+> [!IMPORTANT]
+> This plugin provides credentials *dynamically* at runtime. As a result, they will **not** appear in credential dropdown lists in the Jenkins UI. You cannot use these credentials to configure other plugins (like Git SCM) directly from the Jenkins interface. This provider is designed exclusively for use within pipelines via the `withCredentials()` step.
 
 ## Getting Started
 
