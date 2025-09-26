@@ -4,7 +4,6 @@ import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.mwdle.bitwarden.BitwardenAuthenticationException;
 import com.mwdle.bitwarden.BitwardenCLI;
 import com.mwdle.bitwarden.BitwardenSessionManager;
 import com.mwdle.converters.BitwardenItemConverter;
@@ -71,9 +70,6 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             BitwardenCLI.sync(BitwardenSessionManager.getInstance().getSessionToken());
             bitwardenItems =
                     BitwardenCLI.listItems(BitwardenSessionManager.getInstance().getSessionToken());
-        } catch (BitwardenAuthenticationException e) {
-            LOGGER.severe("Bitwarden authentication failed: " + e.getMessage());
-            throw new RuntimeException(e);
         } catch (IOException | InterruptedException e) {
             LOGGER.warning("Failed to fetch Bitwarden item(s): " + e.getMessage());
             return Collections.emptyList();
