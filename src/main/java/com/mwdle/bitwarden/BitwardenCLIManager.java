@@ -24,16 +24,16 @@ import jenkins.model.Jenkins;
  * and cleanup of the executable on Jenkins shutdown.</p>
  */
 @Extension
-public final class BitwardenExecutableManager {
+public final class BitwardenCLIManager {
 
-    private static final Logger LOGGER = Logger.getLogger(BitwardenExecutableManager.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(BitwardenCLIManager.class.getName());
     private final String executablePath;
 
     /**
      * Constructs the singleton BitwardenExecutableManager.
      * Detects the OS, determines the target path, and downloads the executable if it doesn't exist.
      */
-    public BitwardenExecutableManager() {
+    public BitwardenCLIManager() {
         LOGGER.fine("Starting executable initialization.");
         String downloadUrl;
         String executableName;
@@ -71,8 +71,8 @@ public final class BitwardenExecutableManager {
      *
      * @return The singleton instance of {@link BitwardenSessionManager}.
      */
-    public static BitwardenExecutableManager getInstance() {
-        return Jenkins.get().getExtensionList(BitwardenExecutableManager.class).get(0);
+    public static BitwardenCLIManager getInstance() {
+        return Jenkins.get().getExtensionList(BitwardenCLIManager.class).get(0);
     }
 
     /**

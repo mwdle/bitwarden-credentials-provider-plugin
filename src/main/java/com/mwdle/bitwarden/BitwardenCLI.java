@@ -23,7 +23,7 @@ import org.jenkinsci.plugins.plaincredentials.StringCredentials;
  * This class contains only static methods and holds no state. It is responsible for
  * the low-level logic of constructing and running {@link ProcessBuilder} commands,
  * acting as a thin wrapper around the {@code bw} executable.
- * It uses {@link BitwardenExecutableManager} to locate and manage the CLI binary.
+ * It uses {@link BitwardenCLIManager} to locate and manage the CLI binary.
  */
 public final class BitwardenCLI {
 
@@ -38,7 +38,7 @@ public final class BitwardenCLI {
      * @return A configured ProcessBuilder instance.
      */
     private static ProcessBuilder bitwardenCommand(String... command) {
-        String executablePath = BitwardenExecutableManager.getInstance().getExecutablePath();
+        String executablePath = BitwardenCLIManager.getInstance().getExecutablePath();
         List<String> commandParts = new ArrayList<>();
         commandParts.add(executablePath);
         commandParts.addAll(Arrays.asList(command));

@@ -1,5 +1,9 @@
 package com.mwdle.converters;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.mwdle.model.BitwardenItem;
@@ -9,10 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for the SshKeyConverter class.
@@ -61,7 +61,8 @@ class SshKeyConverterTest {
             BitwardenItem item = mock(BitwardenItem.class);
             when(item.getSshKey()).thenReturn(sshKey);
 
-            assertFalse(converter.canConvert(item), "Should not convert an SSH key item that is missing the private key.");
+            assertFalse(
+                    converter.canConvert(item), "Should not convert an SSH key item that is missing the private key.");
         }
     }
 
@@ -72,7 +73,8 @@ class SshKeyConverterTest {
         @Test
         @DisplayName("should convert an SSH key and derive username from public key comment")
         void shouldConvertAndDeriveUsername() {
-            // End the mock private key with a newline to ensure it matches the convention from the BasicSSHUserPrivateKey class.
+            // End the mock private key with a newline to ensure it matches the convention from the
+            // BasicSSHUserPrivateKey class.
             String privateKeyContent = "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----\n";
             String publicKeyContent = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... jenkins@my-server";
 
@@ -83,21 +85,23 @@ class SshKeyConverterTest {
             BitwardenItem item = mock(BitwardenItem.class);
             when(item.getSshKey()).thenReturn(sshKey);
 
-            BasicSSHUserPrivateKey credential = converter.convert(
-                    CredentialsScope.GLOBAL, "cred-id", "A test SSH key", item);
+            BasicSSHUserPrivateKey credential =
+                    converter.convert(CredentialsScope.GLOBAL, "cred-id", "A test SSH key", item);
 
             assertNotNull(credential);
             assertInstanceOf(BasicSSHUserPrivateKey.class, credential);
             assertEquals("cred-id", credential.getId());
             assertEquals("A test SSH key", credential.getDescription());
-            assertEquals("jenkins", credential.getUsername(), "Username should be derived from the public key comment.");
+            assertEquals(
+                    "jenkins", credential.getUsername(), "Username should be derived from the public key comment.");
             assertEquals(privateKeyContent, credential.getPrivateKeys().get(0));
         }
 
         @Test
         @DisplayName("should convert an SSH key with an empty username if no comment exists")
         void shouldHandleNoUsernameComment() {
-            // End the mock private key with a newline to ensure it matches the convention from the BasicSSHUserPrivateKey class.
+            // End the mock private key with a newline to ensure it matches the convention from the
+            // BasicSSHUserPrivateKey class.
             String privateKeyContent = "-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----\n";
             String publicKeyContent = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA..."; // No comment
 
@@ -108,11 +112,13 @@ class SshKeyConverterTest {
             BitwardenItem item = mock(BitwardenItem.class);
             when(item.getSshKey()).thenReturn(sshKey);
 
-            BasicSSHUserPrivateKey credential = converter.convert(
-                    CredentialsScope.GLOBAL, "cred-id", "Key without comment", item);
+            BasicSSHUserPrivateKey credential =
+                    converter.convert(CredentialsScope.GLOBAL, "cred-id", "Key without comment", item);
 
             // Assert against the expected fallback behavior of the credential class
-            assertEquals(System.getProperty("user.name"), credential.getUsername(),
+            assertEquals(
+                    System.getProperty("user.name"),
+                    credential.getUsername(),
                     "An empty username should cause the credential to fall back to the system username.");
             assertEquals(privateKeyContent, credential.getPrivateKeys().get(0));
         }
@@ -120,7 +126,8 @@ class SshKeyConverterTest {
         @Test
         @DisplayName("should convert an SSH key with an empty username if public key is null")
         void shouldHandleNullPublicKey() {
-            // End the mock private key with a newline to ensure it matches the convention from the BasicSSHUserPrivateKey class.
+            // End the mock private key with a newline to ensure it matches the convention from the
+            // BasicSSHUserPrivateKey class.
             String privateKeyContent = "-----BEGIN EC PRIVATE KEY-----\n...\n-----END EC PRIVATE KEY-----\n";
 
             BitwardenSshKey sshKey = mock(BitwardenSshKey.class);
@@ -130,14 +137,15 @@ class SshKeyConverterTest {
             BitwardenItem item = mock(BitwardenItem.class);
             when(item.getSshKey()).thenReturn(sshKey);
 
-            BasicSSHUserPrivateKey credential = converter.convert(
-                    CredentialsScope.GLOBAL, "cred-id", "Key with null public key", item);
+            BasicSSHUserPrivateKey credential =
+                    converter.convert(CredentialsScope.GLOBAL, "cred-id", "Key with null public key", item);
 
             // FIXED: Assert against the expected fallback behavior of the credential class
-            assertEquals(System.getProperty("user.name"), credential.getUsername(),
+            assertEquals(
+                    System.getProperty("user.name"),
+                    credential.getUsername(),
                     "An empty username should cause the credential to fall back to the system username.");
             assertEquals(privateKeyContent, credential.getPrivateKeys().get(0));
         }
     }
 }
-
