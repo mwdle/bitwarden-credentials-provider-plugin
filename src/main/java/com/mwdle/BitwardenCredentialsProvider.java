@@ -68,9 +68,9 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
 
         List<BitwardenItem> bitwardenItems;
         try {
-            BitwardenCLI.sync(BitwardenSessionManager.get().getSessionToken());
+            BitwardenCLI.sync(BitwardenSessionManager.getInstance().getSessionToken());
             bitwardenItems =
-                    BitwardenCLI.listItems(BitwardenSessionManager.get().getSessionToken());
+                    BitwardenCLI.listItems(BitwardenSessionManager.getInstance().getSessionToken());
         } catch (BitwardenAuthenticationException e) {
             LOGGER.severe("Bitwarden authentication failed: " + e.getMessage());
             throw new RuntimeException(e);

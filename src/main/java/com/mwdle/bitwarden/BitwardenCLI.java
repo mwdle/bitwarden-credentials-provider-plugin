@@ -38,7 +38,7 @@ public final class BitwardenCLI {
      * @return A configured ProcessBuilder instance.
      */
     private static ProcessBuilder bitwardenCommand(String... command) {
-        String executablePath = BitwardenExecutableManager.INSTANCE.getExecutablePath();
+        String executablePath = BitwardenExecutableManager.getInstance().getExecutablePath();
         List<String> commandParts = new ArrayList<>();
         commandParts.add(executablePath);
         commandParts.addAll(Arrays.asList(command));
@@ -124,7 +124,7 @@ public final class BitwardenCLI {
         ProcessBuilder pb = bitwardenCommand("status");
         pb.environment().put("BW_SESSION", Secret.toString(sessionToken));
         String json = executeCommand(pb);
-        LOGGER.info("CLI Status fetched successfully.");
+        LOGGER.info("CLI status fetched successfully.");
         LOGGER.fine(() -> "Status JSON: " + json);
         return OBJECT_MAPPER.readValue(json, BitwardenStatus.class);
     }

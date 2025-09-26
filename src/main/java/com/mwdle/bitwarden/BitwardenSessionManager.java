@@ -44,7 +44,7 @@ public class BitwardenSessionManager {
      *
      * @return The singleton instance of {@link BitwardenSessionManager}.
      */
-    public static BitwardenSessionManager get() {
+    public static BitwardenSessionManager getInstance() {
         return Jenkins.get().getExtensionList(BitwardenSessionManager.class).get(0);
     }
 
