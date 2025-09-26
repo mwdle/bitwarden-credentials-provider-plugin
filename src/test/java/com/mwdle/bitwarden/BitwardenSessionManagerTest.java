@@ -83,32 +83,7 @@ public class BitwardenSessionManagerTest {
         @Test
         @DisplayName("should create new token if cache is empty")
         void shouldCreateNewTokenWhenCacheIsEmpty() throws Exception {
-            StandardUsernamePasswordCredentials apiKey = mock(StandardUsernamePasswordCredentials.class);
-            when(apiKey.getId()).thenReturn("api-key-id");
-
-            StringCredentials masterPassword = mock(StringCredentials.class);
-            when(masterPassword.getId()).thenReturn("master-password-id");
-
-            CredentialsProvider provider = mock(CredentialsProvider.class);
-            when(provider.getCredentialsInItemGroup(
-                            eq(StandardUsernamePasswordCredentials.class),
-                            any(ItemGroup.class),
-                            any(Authentication.class),
-                            anyList()))
-                    .thenReturn(Collections.singletonList(apiKey));
-            when(provider.getCredentialsInItemGroup(
-                            eq(StringCredentials.class), any(ItemGroup.class), any(Authentication.class), anyList()))
-                    .thenReturn(Collections.singletonList(masterPassword));
-
-            @SuppressWarnings("unchecked")
-            ExtensionList<CredentialsProvider> extensionList = mock(ExtensionList.class);
-            when(extensionList.stream()).thenAnswer(invocation -> Stream.of(provider));
-            when(jenkinsMock.getExtensionList(CredentialsProvider.class)).thenReturn(extensionList);
-
-            mockedJenkins.when(Jenkins::getAuthentication2).thenReturn(mock(Authentication.class));
-
-            when(configMock.getApiCredentialId()).thenReturn("api-key-id");
-            when(configMock.getMasterPasswordCredentialId()).thenReturn("master-password-id");
+            setupValidCredentials();
 
             Secret newToken = Secret.fromString("new-session-token");
             mockedCli
@@ -123,6 +98,33 @@ public class BitwardenSessionManagerTest {
             mockedCli.verify(() -> BitwardenCLI.configServer(anyString()));
             mockedCli.verify(() -> BitwardenCLI.login(any(StandardUsernamePasswordCredentials.class)));
             mockedCli.verify(() -> BitwardenCLI.unlock(any(StringCredentials.class)));
+        }
+
+        @Test
+        @DisplayName("should refresh token if cache is invalid")
+        void shouldRefreshTokenWhenCacheIsInvalid() throws Exception {
+            setupValidCredentials();
+            Secret initialToken = Secret.fromString("initial-token");
+            mockedCli
+                    .when(() -> BitwardenCLI.unlock(any(StringCredentials.class)))
+                    .thenReturn(initialToken);
+            assertEquals(initialToken, manager.getSessionToken(), "Should get the initial token successfully.");
+
+            BitwardenStatus lockedStatus = mock(BitwardenStatus.class);
+            when(lockedStatus.getStatus()).thenReturn("locked");
+            mockedCli.when(() -> BitwardenCLI.status(initialToken)).thenReturn(lockedStatus);
+
+            Secret refreshedToken = Secret.fromString("refreshed-token");
+            mockedCli
+                    .when(() -> BitwardenCLI.unlock(any(StringCredentials.class)))
+                    .thenReturn(refreshedToken);
+
+            Secret resultToken = manager.getSessionToken();
+
+            assertEquals(refreshedToken, resultToken, "Should return the new, refreshed token.");
+
+            mockedCli.verify(() -> BitwardenCLI.login(any(StandardUsernamePasswordCredentials.class)), times(2));
+            mockedCli.verify(() -> BitwardenCLI.unlock(any(StringCredentials.class)), times(2));
         }
 
         @Test
