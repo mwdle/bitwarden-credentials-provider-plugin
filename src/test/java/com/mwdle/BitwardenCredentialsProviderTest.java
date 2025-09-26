@@ -1,5 +1,9 @@
 package com.mwdle;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -10,18 +14,13 @@ import com.mwdle.converters.BitwardenItemConverter;
 import com.mwdle.model.BitwardenItem;
 import hudson.model.ItemGroup;
 import hudson.util.Secret;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.junit.jupiter.api.*;
 import org.mockito.MockedStatic;
 import org.springframework.security.core.Authentication;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the BitwardenCredentialsProvider.
@@ -81,14 +80,19 @@ class BitwardenCredentialsProviderTest {
             StandardCredentials credentialByName = mock(StringCredentials.class);
             when(credentialByName.getId()).thenReturn("Item Name");
 
-            mockedConverter.when(() -> BitwardenItemConverter.findConverter(mockItem)).thenReturn(converterMock);
+            mockedConverter
+                    .when(() -> BitwardenItemConverter.findConverter(mockItem))
+                    .thenReturn(converterMock);
             when(converterMock.convert(any(), eq("Item Name"), any(), any())).thenReturn(credentialByName);
             when(converterMock.convert(any(), eq("item-id"), any(), any())).thenReturn(credentialById);
 
-            List<Credentials> credentials = provider.getCredentialsInItemGroup(Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
+            List<Credentials> credentials = provider.getCredentialsInItemGroup(
+                    Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
 
             assertEquals(2, credentials.size(), "Should have created two credentials for the one item.");
-            List<String> ids = credentials.stream().map(c -> ((StandardCredentials) c).getId()).toList();
+            List<String> ids = credentials.stream()
+                    .map(c -> ((StandardCredentials) c).getId())
+                    .toList();
             assertTrue(ids.contains("item-id"), "Should contain credential by ID.");
             assertTrue(ids.contains("Item Name"), "Should contain credential by name.");
             mockedCli.verify(() -> BitwardenCLI.sync(fakeToken), times(1));
@@ -113,9 +117,11 @@ class BitwardenCredentialsProviderTest {
 
             BitwardenItemConverter loginConverter = mock(BitwardenItemConverter.class);
             when(BitwardenItemConverter.findConverter(loginItem)).thenReturn(loginConverter);
-            when(loginConverter.convert(any(), any(), any(), any())).thenReturn(mock(StandardUsernamePasswordCredentials.class));
+            when(loginConverter.convert(any(), any(), any(), any()))
+                    .thenReturn(mock(StandardUsernamePasswordCredentials.class));
 
-            List<StringCredentials> credentials = provider.getCredentialsInItemGroup(StringCredentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
+            List<StringCredentials> credentials = provider.getCredentialsInItemGroup(
+                    StringCredentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
 
             assertEquals(2, credentials.size(), "Should only return the two StringCredentials (by name and ID).");
         }
@@ -131,9 +137,12 @@ class BitwardenCredentialsProviderTest {
             BitwardenItem mockItem = mock(BitwardenItem.class);
             mockedCli.when(() -> BitwardenCLI.listItems(fakeToken)).thenReturn(List.of(mockItem));
 
-            mockedConverter.when(() -> BitwardenItemConverter.findConverter(mockItem)).thenReturn(null);
+            mockedConverter
+                    .when(() -> BitwardenItemConverter.findConverter(mockItem))
+                    .thenReturn(null);
 
-            List<Credentials> credentials = provider.getCredentialsInItemGroup(Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
+            List<Credentials> credentials = provider.getCredentialsInItemGroup(
+                    Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
 
             assertTrue(credentials.isEmpty(), "Should return an empty list if no items can be converted.");
         }
@@ -141,8 +150,10 @@ class BitwardenCredentialsProviderTest {
         @Test
         @DisplayName("should return an empty list if context is missing")
         void shouldReturnEmptyListIfContextIsMissing() {
-            List<Credentials> noItemGroup = provider.getCredentialsInItemGroup(Credentials.class, null, mockAuthentication, Collections.emptyList());
-            List<Credentials> noAuth = provider.getCredentialsInItemGroup(Credentials.class, mockItemGroup, null, Collections.emptyList());
+            List<Credentials> noItemGroup = provider.getCredentialsInItemGroup(
+                    Credentials.class, null, mockAuthentication, Collections.emptyList());
+            List<Credentials> noAuth =
+                    provider.getCredentialsInItemGroup(Credentials.class, mockItemGroup, null, Collections.emptyList());
 
             assertTrue(noItemGroup.isEmpty(), "Should be empty if item group is null.");
             assertTrue(noAuth.isEmpty(), "Should be empty if authentication is null.");
@@ -152,10 +163,14 @@ class BitwardenCredentialsProviderTest {
         @DisplayName("should throw a RuntimeException when authentication fails")
         void shouldThrowRuntimeExceptionWhenAuthFails() throws Exception {
             BitwardenSessionManager sessionManagerMock = mock(BitwardenSessionManager.class);
-            when(sessionManagerMock.getSessionToken()).thenThrow(new BitwardenAuthenticationException("Auth failed", null));
+            when(sessionManagerMock.getSessionToken())
+                    .thenThrow(new BitwardenAuthenticationException("Auth failed", null));
             mockedSessionManager.when(BitwardenSessionManager::getInstance).thenReturn(sessionManagerMock);
 
-            assertThrows(RuntimeException.class, () -> provider.getCredentialsInItemGroup(Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList()));
+            assertThrows(
+                    RuntimeException.class,
+                    () -> provider.getCredentialsInItemGroup(
+                            Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList()));
         }
 
         @Test
@@ -165,7 +180,8 @@ class BitwardenCredentialsProviderTest {
             when(sessionManagerMock.getSessionToken()).thenThrow(new IOException("CLI failed"));
             mockedSessionManager.when(BitwardenSessionManager::getInstance).thenReturn(sessionManagerMock);
 
-            List<Credentials> credentials = provider.getCredentialsInItemGroup(Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
+            List<Credentials> credentials = provider.getCredentialsInItemGroup(
+                    Credentials.class, mockItemGroup, mockAuthentication, Collections.emptyList());
 
             assertTrue(credentials.isEmpty(), "Should return an empty list on a non-auth failure.");
         }
