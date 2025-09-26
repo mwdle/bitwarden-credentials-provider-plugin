@@ -15,6 +15,8 @@
   <packaging>hpi</packaging>
 
   <name>Bitwarden Credentials Provider Plugin</name>
+  <description>A Jenkins plugin to fetch secrets from a Bitwarden or Vaultwarden vault and use them as native credentials.</description>
+  <url>https://plugins.jenkins.io/bitwarden-credentials-provider-plugin/</url>
 
   <licenses>
     <license>
@@ -29,6 +31,13 @@
       <name>Michael Wadley</name>
     </developer>
   </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/mwdle/bitwarden-credentials-provider-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:mwdle/bitwarden-credentials-provider-plugin.git</developerConnection>
+    <tag>${scmTag}</tag>
+    <url>https://github.com/mwdle/bitwarden-credentials-provider-plugin</url>
+  </scm>
 
   <properties>
     <revision>1.0</revision>
