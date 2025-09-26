@@ -1,4 +1,4 @@
-# Bitwarden Credentials Provider Plugin
+# Bitwarden Credentials Provider
 
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/bitwarden-credentials-provider.svg)](https://plugins.jenkins.io/bitwarden-credentials-provider)
 [![GitHub release](https://img.shields.io/github/release/mwdle/bitwarden-credentials-provider-plugin.svg?label=release)](https://github.com/mwdle/bitwarden-credentials-provider-plugin/releases/latest)
@@ -83,12 +83,12 @@ withCredentials([usernamePassword(credentialsId: 'a1b2c3d4-e5f6-7890-a1b2-c3d4e5
 
 The plugin can automatically convert Bitwarden items into the following Jenkins credential types based on their content.
 
-| Bitwarden Item Type | Jenkins Credential Type               | Notes                                                              |
-| ------------------- |---------------------------------------| ------------------------------------------------------------------ |
-| Login               | `StandardUsernamePasswordCredentials` |                                                                    |
-| Secure Note         | `StringCredentials`                   | The default for any secure note.                                   |
-| Secure Note         | `FileCredentials`                     | If the note's name ends with `.env`. Useful for Docker Compose.    |
-| SSH Key             | `SSHUserPrivateKey`                   | The username is parsed from the public key's comment field.        |
+| Bitwarden Item Type | Jenkins Credential Type               | Notes                                                           |
+|---------------------|---------------------------------------|-----------------------------------------------------------------|
+| Login               | `StandardUsernamePasswordCredentials` |                                                                 |
+| Secure Note         | `StringCredentials`                   | The default for any secure note.                                |
+| Secure Note         | `FileCredentials`                     | If the note's name ends with `.env`. Useful for Docker Compose. |
+| SSH Key             | `SSHUserPrivateKey`                   | The username is parsed from the public key's comment field.     |
 
 ## License
 

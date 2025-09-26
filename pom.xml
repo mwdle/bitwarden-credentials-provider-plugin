@@ -9,14 +9,14 @@
     <relativePath />
   </parent>
 
-  <groupId>com.mwdle</groupId>
-  <artifactId>bitwarden-credentials-provider-plugin</artifactId>
+  <groupId>io.jenkins.plugins</groupId>
+  <artifactId>bitwarden-credentials-provider</artifactId>
   <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
 
-  <name>Bitwarden Credentials Provider Plugin</name>
+  <name>Bitwarden Credentials Provider</name>
   <description>A Jenkins plugin to fetch secrets from a Bitwarden or Vaultwarden vault and use them as native credentials.</description>
-  <url>https://plugins.jenkins.io/bitwarden-credentials-provider-plugin/</url>
+  <url>https://plugins.jenkins.io/bitwarden-credentials-provider/</url>
 
   <licenses>
     <license>
