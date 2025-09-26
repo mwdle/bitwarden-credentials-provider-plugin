@@ -4,7 +4,11 @@
 [![GitHub release](https://img.shields.io/github/release/mwdle/bitwarden-credentials-provider-plugin.svg?label=release)](https://github.com/mwdle/bitwarden-credentials-provider-plugin/releases/latest)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/bitwarden-credentials-provider.svg?color=blue)](https://plugins.jenkins.io/bitwarden-credentials-provider)
 
-The **Bitwarden Credentials Provider** is a [Jenkins](https://jenkins.io) plugin that dynamically exposes every item in your [Bitwarden](https://bitwarden.com/) vault as a native Jenkins credential. It allows pipeline authors to access any secret on the fly by its name or ID, without requiring an administrator to pre-configure mappings in the Jenkins UI.
+The **Bitwarden Credentials Provider** is a [Jenkins](https://jenkins.io) plugin that dynamically exposes every item in your [Bitwarden](https://bitwarden.com/) personal vault as a native Jenkins credential. It allows pipeline authors to access any secret on the fly by its name or ID, without requiring an administrator to pre-configure mappings in the Jenkins UI.
+
+> [!NOTE]
+> This plugin is designed specifically for the **Bitwarden Password Manager** product (or self-hosted [Vaultwarden](https://github.com/dani-garcia/vaultwarden)) and operates on **personal vaults**.  
+> It does **not** integrate with the separate enterprise product **Bitwarden Secrets Manager**.
 
 ## Table of Contents
 
@@ -30,7 +34,7 @@ On every credential request, the plugin:
 4.  Dynamically converts each Bitwarden item into a native Jenkins credential, making it available to your jobs.
 
 > [!IMPORTANT]
-> This plugin provides credentials *dynamically* at runtime. As a result, they will **not** appear in credential dropdown lists in the Jenkins UI. You cannot use these credentials to configure other plugins (like Git SCM) directly from the Jenkins interface. This provider is designed exclusively for use within pipelines via the `withCredentials()` step.
+> The credentials provided by this plugin will **not** appear in credential dropdown lists in the Jenkins UI. You cannot use these credentials to configure other plugins (like Git SCM) directly from the Jenkins interface. This provider is designed exclusively for use within pipelines via the `withCredentials()` step.
 
 ## Getting Started
 
