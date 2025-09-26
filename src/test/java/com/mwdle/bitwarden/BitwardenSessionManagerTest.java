@@ -136,14 +136,14 @@ public class BitwardenSessionManagerTest {
             // Tell the mock CLI to throw an error when login is attempted
             mockedCli
                     .when(() -> BitwardenCLI.login(any(StandardUsernamePasswordCredentials.class)))
-                    .thenThrow(new BitwardenAuthenticationException("Invalid API Key", new IOException()));
+                    .thenThrow(new BitwardenAuthenticationException("Invalid API Key", new RuntimeException()));
 
             BitwardenAuthenticationException exception = assertThrows(
                     BitwardenAuthenticationException.class,
                     () -> manager.getSessionToken(),
                     "Should throw an exception when login fails.");
             assertTrue(
-                    exception.getMessage().contains("Bitwarden login failed"),
+                    exception.getMessage().contains("Invalid API Key"),
                     "The exception message should indicate a login failure.");
         }
 
@@ -155,14 +155,14 @@ public class BitwardenSessionManagerTest {
             // Tell the mock CLI to succeed on login but fail on unlock
             mockedCli
                     .when(() -> BitwardenCLI.unlock(any(StringCredentials.class)))
-                    .thenThrow(new BitwardenAuthenticationException("Invalid Master Password", new IOException()));
+                    .thenThrow(new BitwardenAuthenticationException("Invalid Master Password", new RuntimeException()));
 
             BitwardenAuthenticationException exception = assertThrows(
                     BitwardenAuthenticationException.class,
                     () -> manager.getSessionToken(),
                     "Should throw an exception when unlock fails.");
             assertTrue(
-                    exception.getMessage().contains("Bitwarden unlock failed"),
+                    exception.getMessage().contains("Invalid Master Password"),
                     "The exception message should indicate an unlock failure.");
         }
 
