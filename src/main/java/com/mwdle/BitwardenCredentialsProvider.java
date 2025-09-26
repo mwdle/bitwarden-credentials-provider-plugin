@@ -75,7 +75,7 @@ public class BitwardenCredentialsProvider extends CredentialsProvider {
             LOGGER.severe("Bitwarden authentication failed: " + e.getMessage());
             throw new RuntimeException(e);
         } catch (IOException | InterruptedException e) {
-            LOGGER.warning("Failed to fetch Bitwarden items: " + e.getMessage());
+            LOGGER.warning("Failed to fetch Bitwarden item(s): " + e.getMessage());
             return Collections.emptyList();
         }
 
